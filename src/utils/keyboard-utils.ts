@@ -7,7 +7,13 @@ const KEY_ALIASES: Record<string, string> = {
   space: " ",
 };
 
-const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.userAgent);
+let _isMac: boolean | null = null;
+function isMac(): boolean {
+  if (_isMac === null) {
+    _isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.userAgent);
+  }
+  return _isMac;
+}
 
 export function matchesHotkey(event: KeyboardEvent, hotkey: string): boolean {
   const parts = hotkey.toLowerCase().split("+");
@@ -16,7 +22,7 @@ export function matchesHotkey(event: KeyboardEvent, hotkey: string): boolean {
 
   if (mods.has("mod")) {
     mods.delete("mod");
-    if (isMac) mods.add("meta");
+    if (isMac()) mods.add("meta");
     else mods.add("ctrl");
   }
 

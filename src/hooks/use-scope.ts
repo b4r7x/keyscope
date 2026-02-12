@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useKeyboardContext } from "../context/keyboard-context";
+import { useKeyboardContext } from "../context/keyboard-context.js";
 
 interface UseScopeOptions {
   enabled?: boolean;

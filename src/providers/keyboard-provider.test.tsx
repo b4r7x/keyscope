@@ -49,6 +49,89 @@ describe("KeyboardProvider", () => {
     expect(handler).toHaveBeenCalledOnce();
   });
 
+  it("should pass the KeyboardEvent to the handler", () => {
+    const handler = vi.fn();
+
+    function Consumer() {
+      const { register } = useKeyboardContext();
+      useEffect(() => register("global", "a", handler), []);
+      return <div>consumer</div>;
+    }
+
+    render(
+      <Wrapper>
+        <Consumer />
+      </Wrapper>,
+    );
+
+    act(() => {
+      pressKey("a");
+    });
+
+    expect(handler).toHaveBeenCalledWith(expect.any(KeyboardEvent));
+    expect(handler.mock.calls[0][0].key).toBe("a");
+  });
+
+  it("should not call preventDefault by default", () => {
+    const handler = vi.fn();
+
+    function Consumer() {
+      const { register } = useKeyboardContext();
+      useEffect(() => register("global", "a", handler), []);
+      return <div>consumer</div>;
+    }
+
+    render(
+      <Wrapper>
+        <Consumer />
+      </Wrapper>,
+    );
+
+    const event = new KeyboardEvent("keydown", {
+      key: "a",
+      bubbles: true,
+      cancelable: true,
+    });
+    const preventSpy = vi.spyOn(event, "preventDefault");
+
+    act(() => {
+      window.dispatchEvent(event);
+    });
+
+    expect(handler).toHaveBeenCalledOnce();
+    expect(preventSpy).not.toHaveBeenCalled();
+  });
+
+  it("should call preventDefault when option is explicitly true", () => {
+    const handler = vi.fn();
+
+    function Consumer() {
+      const { register } = useKeyboardContext();
+      useEffect(() => register("global", "a", handler, { preventDefault: true }), []);
+      return <div>consumer</div>;
+    }
+
+    render(
+      <Wrapper>
+        <Consumer />
+      </Wrapper>,
+    );
+
+    const event = new KeyboardEvent("keydown", {
+      key: "a",
+      bubbles: true,
+      cancelable: true,
+    });
+    const preventSpy = vi.spyOn(event, "preventDefault");
+
+    act(() => {
+      window.dispatchEvent(event);
+    });
+
+    expect(handler).toHaveBeenCalledOnce();
+    expect(preventSpy).toHaveBeenCalledOnce();
+  });
+
   it("should not fire handler for non-matching key", () => {
     const handler = vi.fn();
 
@@ -350,6 +433,68 @@ describe("KeyboardProvider", () => {
       pressKey("a");
     });
     expect(firstHandler).toHaveBeenCalledOnce();
+  });
+
+  it("should not crash when a handler throws an error", () => {
+    const errorHandler = vi.fn(() => {
+      throw new Error("handler exploded");
+    });
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    function Consumer() {
+      const { register } = useKeyboardContext();
+      useEffect(() => register("global", "a", errorHandler), []);
+      return <div>consumer</div>;
+    }
+
+    render(
+      <Wrapper>
+        <Consumer />
+      </Wrapper>,
+    );
+
+    // Should not throw — provider catches handler errors
+    act(() => {
+      pressKey("a");
+    });
+
+    expect(errorHandler).toHaveBeenCalledOnce();
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("[keyscope]"),
+      expect.any(Error),
+    );
+
+    consoleSpy.mockRestore();
+  });
+
+  it("should continue working after a handler throws", () => {
+    const errorHandler = vi.fn(() => {
+      throw new Error("boom");
+    });
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    function Consumer() {
+      const { register } = useKeyboardContext();
+      useEffect(() => {
+        register("global", "a", errorHandler);
+      }, []);
+      return <div>consumer</div>;
+    }
+
+    render(
+      <Wrapper>
+        <Consumer />
+      </Wrapper>,
+    );
+
+    act(() => pressKey("a"));
+    expect(errorHandler).toHaveBeenCalledOnce();
+
+    // Provider should still be functional — fire another key
+    act(() => pressKey("a"));
+    expect(errorHandler).toHaveBeenCalledTimes(2);
+
+    consoleSpy.mockRestore();
   });
 
   it("should only trigger focus-scoped handlers when event target is inside targetRef", () => {

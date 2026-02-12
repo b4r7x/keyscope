@@ -1,13 +1,13 @@
 import { useState, type RefObject } from "react";
-import type { NavigationRole } from "../utils/types";
+import type { NavigationRole } from "../utils/types.js";
 
 export interface UseDomNavigationCoreOptions {
   containerRef: RefObject<HTMLElement | null>;
   role: NavigationRole;
   value?: string | null;
   onValueChange?: (value: string) => void;
-  onSelect?: (value: string) => void;
-  onEnter?: (value: string) => void;
+  onSelect?: (value: string, event: KeyboardEvent) => void;
+  onEnter?: (value: string, event: KeyboardEvent) => void;
   onFocusChange?: (value: string) => void;
   wrap?: boolean;
   onBoundaryReached?: (direction: "up" | "down") => void;
@@ -20,8 +20,8 @@ export interface UseDomNavigationCoreReturn {
   focus: (value: string) => void;
   move: (delta: 1 | -1) => void;
   focusIndex: (index: number) => void;
-  handleSelect: () => void;
-  handleEnter: () => void;
+  handleSelect: (event: KeyboardEvent) => void;
+  handleEnter: (event: KeyboardEvent) => void;
   getElements: () => HTMLElement[];
 }
 
@@ -102,15 +102,16 @@ export function useDomNavigationCore({
     focusIndex(next);
   };
 
-  const handleSelect = () => {
+  const handleSelect = (event: KeyboardEvent) => {
     if (focusedValue) {
-      onSelect?.(focusedValue);
+      onSelect?.(focusedValue, event);
     }
   };
 
-  const handleEnter = () => {
+  const handleEnter = (event: KeyboardEvent) => {
     if (focusedValue) {
-      onEnter ? onEnter(focusedValue) : onSelect?.(focusedValue);
+      if (onEnter) onEnter(focusedValue, event);
+      else onSelect?.(focusedValue, event);
     }
   };
 

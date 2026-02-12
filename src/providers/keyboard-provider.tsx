@@ -1,7 +1,7 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
-import { isInputElement, matchesHotkey } from "../utils/keyboard-utils";
+import { isInputElement, matchesHotkey } from "../utils/keyboard-utils.js";
 
-type Handler = () => void;
+type Handler = (event: KeyboardEvent) => void;
 
 export interface HandlerOptions {
   allowInInput?: boolean;
@@ -26,6 +26,13 @@ interface KeyboardContextValue {
 
 export const KeyboardContext = createContext<KeyboardContextValue | undefined>(undefined);
 
+function isWithinTarget(eventTarget: EventTarget | null, options?: HandlerOptions): boolean {
+  if (!options?.targetRef || !options.requireFocusWithin) return true;
+  const targetElement = options.targetRef.current;
+  if (!targetElement || !(eventTarget instanceof Node)) return false;
+  return targetElement.contains(eventTarget);
+}
+
 export function KeyboardProvider({ children }: { children: ReactNode }) {
   const [scopeStack, setScopeStack] = useState<string[]>(["global"]);
   const scopeStackRef = useRef(scopeStack);
@@ -34,16 +41,6 @@ export function KeyboardProvider({ children }: { children: ReactNode }) {
   const nextHandlerId = useRef(1);
 
   const activeScope = scopeStack[scopeStack.length - 1] ?? null;
-
-  const isWithinTarget = useCallback(
-    (eventTarget: EventTarget | null, options?: HandlerOptions): boolean => {
-      if (!options?.targetRef || !options.requireFocusWithin) return true;
-      const targetElement = options.targetRef.current;
-      if (!targetElement || !(eventTarget instanceof Node)) return false;
-      return targetElement.contains(eventTarget);
-    },
-    []
-  );
 
   const pushScope = useCallback((scope: string) => {
     setScopeStack((prev) => [...prev, scope]);
@@ -79,11 +76,15 @@ export function KeyboardProvider({ children }: { children: ReactNode }) {
             if (isInput && !entry.options?.allowInInput) continue;
             if (!isWithinTarget(event.target, entry.options)) continue;
 
-            if (entry.options?.preventDefault !== false) {
+            if (entry.options?.preventDefault === true) {
               event.preventDefault();
             }
 
-            entry.handler();
+            try {
+              entry.handler(event);
+            } catch (error) {
+              console.error(`[keyscope] Handler error for "${hotkey}":`, error);
+            }
             return;
           }
         }
@@ -92,7 +93,7 @@ export function KeyboardProvider({ children }: { children: ReactNode }) {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [activeScope, isWithinTarget]);
+  }, [activeScope]);
 
   const register = useCallback((scope: string, hotkey: string, handler: Handler, options?: HandlerOptions) => {
     const scopeHandlers = handlers.current.get(scope) ?? new Map<string, HandlerEntry[]>();
