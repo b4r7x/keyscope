@@ -1,5 +1,7 @@
 # Focus and Scroll
 
+> Try the [Focus Trap demo](../../examples/playground/) to see focus trapping in action.
+
 Two utility hooks for managing focus traps and scroll locking. Both are independent of `KeyboardProvider` and work anywhere in your component tree.
 
 ## useFocusTrap

@@ -1,5 +1,7 @@
 # Scopes
 
+> Try the [Scoped Dialog demo](../../examples/playground/) to see scopes in action.
+
 Scopes control which keyboard handlers are active at any given moment. Only handlers registered in the **active scope** receive events. Everything else is paused.
 
 ## How the scope stack works
