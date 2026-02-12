@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { matchesHotkey, isInputElement } from "./keyboard-utils";
 
 function makeKeyEvent(
@@ -51,8 +51,8 @@ describe("matchesHotkey", () => {
     expect(matchesHotkey(makeKeyEvent(" "), "space")).toBe(true);
   });
 
-  it("should resolve mod to meta on Mac", () => {
-    // Temporarily mock navigator.userAgent for Mac
+  it("should resolve mod to meta on Mac (lazy isMac)", async () => {
+    // isMac is now lazy — reset module to test Mac detection
     const originalNavigator = globalThis.navigator;
     Object.defineProperty(globalThis, "navigator", {
       value: { userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X)" },
@@ -60,10 +60,12 @@ describe("matchesHotkey", () => {
       configurable: true,
     });
 
-    // Re-import to pick up new navigator — or test the function directly
-    // Note: isMac is evaluated at module load time, so this may need
-    // module re-evaluation or testing against the known platform
-    // For CI, test both branches by mocking at the module level
+    // Re-import to get a fresh module with reset _isMac cache
+    vi.resetModules();
+    const { matchesHotkey: freshMatchesHotkey } = await import("./keyboard-utils");
+
+    expect(freshMatchesHotkey(makeKeyEvent("k", { meta: true }), "mod+k")).toBe(true);
+    expect(freshMatchesHotkey(makeKeyEvent("k", { ctrl: true }), "mod+k")).toBe(false);
 
     Object.defineProperty(globalThis, "navigator", {
       value: originalNavigator,

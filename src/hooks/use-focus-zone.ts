@@ -1,6 +1,7 @@
 import { useState, useEffectEvent } from "react";
-import { useKey } from "./use-key";
-import { useScope } from "./use-scope";
+import { useKey } from "./use-key.js";
+import type { UseKeyOptions } from "./use-key.js";
+import { useScope } from "./use-scope.js";
 
 type ZoneTransition<T extends string> = (params: {
   zone: T;
@@ -22,6 +23,7 @@ interface UseFocusZoneReturn<T extends string> {
   zone: T;
   setZone: (zone: T) => void;
   inZone: (...zones: T[]) => boolean;
+  forZone: (target: T, extra?: UseKeyOptions) => UseKeyOptions;
 }
 
 const ARROW_KEYS = [
@@ -35,6 +37,13 @@ export function useFocusZone<T extends string>(
   options: UseFocusZoneOptions<T>,
 ): UseFocusZoneReturn<T> {
   const { initial, zones, enabled = true } = options;
+
+  if (!zones.includes(initial)) {
+    throw new Error(
+      `[keyscope] useFocusZone: initial zone "${initial}" is not in zones [${zones.join(", ")}]`
+    );
+  }
+
   const [internalZone, setInternalZone] = useState<T>(initial);
 
   const isControlled = options.zone !== undefined;
@@ -63,14 +72,28 @@ export function useFocusZone<T extends string>(
     setZoneValue(next);
   });
 
-  // Arrow keys — handler no-ops when transition returns null
-  for (const key of ARROW_KEYS) {
-    useKey(key, () => stableTransitions(key), {
-      enabled: enabled && options.transitions != null,
-    });
-  }
+  const stableTabCycleReverse = useEffectEvent(() => {
+    if (!options.tabCycle || options.tabCycle.length === 0) return;
+    const cycle = options.tabCycle;
+    const idx = cycle.indexOf(currentZone);
+    const next = cycle[(idx - 1 + cycle.length) % cycle.length]!;
+    setZoneValue(next);
+  });
+
+  // Arrow keys — single useKey call with object overload (no hook-in-loop)
+  useKey(
+    Object.fromEntries(
+      ARROW_KEYS.map(k => [k, () => stableTransitions(k)])
+    ),
+    { enabled: enabled && options.transitions != null },
+  );
 
   useKey("Tab", stableTabCycle, {
+    enabled: enabled && options.tabCycle != null,
+    preventDefault: true,
+  });
+
+  useKey("shift+Tab", stableTabCycleReverse, {
     enabled: enabled && options.tabCycle != null,
     preventDefault: true,
   });
@@ -81,5 +104,9 @@ export function useFocusZone<T extends string>(
     zone: currentZone,
     setZone: (zone: T) => setZoneValue(zone),
     inZone: (...zones: T[]) => zones.includes(currentZone),
+    forZone: (target: T, extra?: UseKeyOptions): UseKeyOptions => ({
+      ...extra,
+      enabled: currentZone === target && (extra?.enabled ?? true),
+    }),
   };
 }

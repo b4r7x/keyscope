@@ -1,16 +1,15 @@
-import type { RefObject, KeyboardEvent } from "react";
-import { useKey } from "./use-key";
-import { useKeys } from "./use-keys";
-import { useDomNavigationCore } from "../internal/use-dom-navigation-core";
-import type { NavigationRole } from "../utils/types";
+import { useEffectEvent, type RefObject, type KeyboardEvent } from "react";
+import { useKey } from "./use-key.js";
+import { useDomNavigationCore } from "../internal/use-dom-navigation-core.js";
+import type { NavigationRole } from "../utils/types.js";
 
 interface UseNavigationBaseOptions {
   containerRef: RefObject<HTMLElement | null>;
   role: NavigationRole;
   value?: string | null;
   onValueChange?: (value: string) => void;
-  onSelect?: (value: string) => void;
-  onEnter?: (value: string) => void;
+  onSelect?: (value: string, event: globalThis.KeyboardEvent) => void;
+  onEnter?: (value: string, event: globalThis.KeyboardEvent) => void;
   onFocusChange?: (value: string) => void;
   wrap?: boolean;
   enabled?: boolean;
@@ -77,68 +76,50 @@ export function useNavigation({
       initialValue,
     });
 
+  // Shared key→action dispatch (used by both scoped and local modes)
+  const dispatch = useEffectEvent((key: string, nativeEvent: globalThis.KeyboardEvent) => {
+    if (upKeys.includes(key)) { move(-1); return; }
+    if (downKeys.includes(key)) { move(1); return; }
+    switch (key) {
+      case "Home": focusIndex(0); break;
+      case "End": {
+        const elements = getElements();
+        if (elements.length > 0) focusIndex(elements.length - 1);
+        break;
+      }
+      case "Enter": handleEnter(nativeEvent); break;
+      case " ": handleSelect(nativeEvent); break;
+    }
+  });
+
   // Scoped mode: register keys via KeyboardProvider
   const scopedEnabled = enabled && isScoped;
   const keyOptions = {
     enabled: scopedEnabled,
+    preventDefault: true,
     targetRef: containerRef,
     requireFocusWithin,
   } as const;
 
-  useKeys(upKeys, () => move(-1), keyOptions);
-  useKeys(downKeys, () => move(1), keyOptions);
-  useKey("Home", () => focusIndex(0), keyOptions);
-  useKey("End", () => {
-    const elements = getElements();
-    if (elements.length === 0) return;
-    focusIndex(elements.length - 1);
-  }, keyOptions);
-  useKey("Enter", handleEnter, keyOptions);
-  useKey(" ", handleSelect, keyOptions);
+  useKey(upKeys, (e) => dispatch(e.key, e), keyOptions);
+  useKey(downKeys, (e) => dispatch(e.key, e), keyOptions);
+  useKey("Home", (e) => dispatch("Home", e), keyOptions);
+  useKey("End", (e) => dispatch("End", e), keyOptions);
+  useKey("Enter", (e) => dispatch("Enter", e), keyOptions);
+  useKey(" ", (e) => dispatch(" ", e), keyOptions);
+
+  const stableOnKeyDown = useEffectEvent((event: KeyboardEvent) => {
+    if (!enabled) return;
+    const key = event.key;
+    const handled = upKeys.includes(key) || downKeys.includes(key)
+      || key === "Home" || key === "End" || key === "Enter" || key === " ";
+    if (!handled) return;
+    event.preventDefault();
+    dispatch(key, event.nativeEvent);
+  });
 
   if (!isScoped) {
-    // Local mode: return onKeyDown handler
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (!enabled) return;
-
-      const key = event.key;
-
-      if (upKeys.includes(key)) {
-        event.preventDefault();
-        move(-1);
-        return;
-      }
-      if (downKeys.includes(key)) {
-        event.preventDefault();
-        move(1);
-        return;
-      }
-
-      switch (key) {
-        case "Home":
-          event.preventDefault();
-          focusIndex(0);
-          break;
-        case "End": {
-          event.preventDefault();
-          const elements = getElements();
-          if (elements.length > 0) {
-            focusIndex(elements.length - 1);
-          }
-          break;
-        }
-        case "Enter":
-          event.preventDefault();
-          handleEnter();
-          break;
-        case " ":
-          event.preventDefault();
-          handleSelect();
-          break;
-      }
-    };
-
-    return { focusedValue, isFocused, focus, onKeyDown };
+    return { focusedValue, isFocused, focus, onKeyDown: stableOnKeyDown };
   }
 
   return { focusedValue, isFocused, focus };
