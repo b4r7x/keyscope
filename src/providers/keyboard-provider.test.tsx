@@ -435,7 +435,7 @@ describe("KeyboardProvider", () => {
     expect(firstHandler).toHaveBeenCalledOnce();
   });
 
-  it("should not crash when a handler throws an error", () => {
+  it("should not crash when a handler throws and should continue working", () => {
     const errorHandler = vi.fn(() => {
       throw new Error("handler exploded");
     });
@@ -464,37 +464,54 @@ describe("KeyboardProvider", () => {
       expect.any(Error),
     );
 
-    consoleSpy.mockRestore();
-  });
-
-  it("should continue working after a handler throws", () => {
-    const errorHandler = vi.fn(() => {
-      throw new Error("boom");
-    });
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-
-    function Consumer() {
-      const { register } = useKeyboardContext();
-      useEffect(() => {
-        register("global", "a", errorHandler);
-      }, []);
-      return <div>consumer</div>;
-    }
-
-    render(
-      <Wrapper>
-        <Consumer />
-      </Wrapper>,
-    );
-
-    act(() => pressKey("a"));
-    expect(errorHandler).toHaveBeenCalledOnce();
-
     // Provider should still be functional — fire another key
     act(() => pressKey("a"));
     expect(errorHandler).toHaveBeenCalledTimes(2);
 
     consoleSpy.mockRestore();
+  });
+
+  it("should handle duplicate scope names from separate components independently", () => {
+    const handlerA = vi.fn();
+    const handlerB = vi.fn();
+    const popRefA = { current: () => {} };
+
+    function ConsumerA() {
+      const { register, pushScope } = useKeyboardContext();
+      useEffect(() => {
+        register("modal", "a", handlerA);
+        popRefA.current = pushScope("modal");
+      }, []);
+      return <div>A</div>;
+    }
+
+    function ConsumerB() {
+      const { register, pushScope } = useKeyboardContext();
+      useEffect(() => {
+        register("modal", "b", handlerB);
+        pushScope("modal");
+      }, []);
+      return <div>B</div>;
+    }
+
+    render(
+      <Wrapper>
+        <ConsumerA />
+        <ConsumerB />
+      </Wrapper>,
+    );
+
+    act(() => pressKey("a"));
+    expect(handlerA).toHaveBeenCalledOnce();
+
+    act(() => pressKey("b"));
+    expect(handlerB).toHaveBeenCalledOnce();
+
+    // Popping A's scope should not break B's handler since scope name is still active
+    act(() => popRefA.current());
+
+    act(() => pressKey("b"));
+    expect(handlerB).toHaveBeenCalledTimes(2);
   });
 
   it("should only trigger focus-scoped handlers when event target is inside targetRef", () => {

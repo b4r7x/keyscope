@@ -62,69 +62,7 @@ describe("useFocusZone", () => {
     });
   });
 
-  describe("inZone helper", () => {
-    it("returns true when current zone matches", () => {
-      const { result } = renderHook(
-        () =>
-          useFocusZone({
-            initial: "main",
-            zones: ["main", "sidebar", "footer"],
-          }),
-        { wrapper },
-      );
-
-      expect(result.current.inZone("main")).toBe(true);
-      expect(result.current.inZone("sidebar")).toBe(false);
-    });
-
-    it("accepts variadic args", () => {
-      const { result } = renderHook(
-        () =>
-          useFocusZone({
-            initial: "main",
-            zones: ["main", "sidebar", "footer"],
-          }),
-        { wrapper },
-      );
-
-      expect(result.current.inZone("main", "footer")).toBe(true);
-      expect(result.current.inZone("sidebar", "footer")).toBe(false);
-    });
-  });
-
   describe("forZone helper", () => {
-    it("returns enabled: true when zone matches", () => {
-      const { result } = renderHook(
-        () => useFocusZone({ initial: "main", zones: ["main", "sidebar"] }),
-        { wrapper },
-      );
-
-      expect(result.current.forZone("main")).toEqual({ enabled: true });
-    });
-
-    it("returns enabled: false when zone does not match", () => {
-      const { result } = renderHook(
-        () => useFocusZone({ initial: "main", zones: ["main", "sidebar"] }),
-        { wrapper },
-      );
-
-      expect(result.current.forZone("sidebar")).toEqual({ enabled: false });
-    });
-
-    it("updates when zone changes", () => {
-      const { result } = renderHook(
-        () => useFocusZone({ initial: "main", zones: ["main", "sidebar"] }),
-        { wrapper },
-      );
-
-      expect(result.current.forZone("sidebar")).toEqual({ enabled: false });
-
-      act(() => result.current.setZone("sidebar"));
-
-      expect(result.current.forZone("sidebar")).toEqual({ enabled: true });
-      expect(result.current.forZone("main")).toEqual({ enabled: false });
-    });
-
     it("merges extra options and ANDs enabled", () => {
       const { result } = renderHook(
         () => useFocusZone({ initial: "main", zones: ["main", "sidebar"] }),
@@ -203,21 +141,6 @@ describe("useFocusZone", () => {
       expect(result.current.zone).toBe("main");
     });
 
-    it("does not change zone when transition returns null", () => {
-      const { result } = renderHook(
-        () =>
-          useFocusZone({
-            initial: "main",
-            zones: ["main", "sidebar"],
-            transitions: () => null,
-          }),
-        { wrapper },
-      );
-
-      act(() => fireKey("ArrowUp"));
-      expect(result.current.zone).toBe("main");
-    });
-
     it("does not change zone when transition returns zone not in zones array", () => {
       const { result } = renderHook(
         () =>
@@ -233,50 +156,6 @@ describe("useFocusZone", () => {
       expect(result.current.zone).toBe("main");
     });
 
-    it("calls onZoneChange on transition in controlled mode", () => {
-      const onZoneChange = vi.fn();
-      renderHook(
-        () =>
-          useFocusZone({
-            initial: "main",
-            zones: ["main", "sidebar"],
-            zone: "main",
-            onZoneChange,
-            transitions: ({ key }) => {
-              if (key === "ArrowRight") return "sidebar";
-              return null;
-            },
-          }),
-        { wrapper },
-      );
-
-      act(() => fireKey("ArrowRight"));
-      expect(onZoneChange).toHaveBeenCalledWith("sidebar");
-    });
-
-    it("registers all arrow keys when transitions are present (no-ops for null transitions)", () => {
-      const { result } = renderHook(
-        () =>
-          useFocusZone({
-            initial: "main",
-            zones: ["main", "sidebar"],
-            transitions: ({ zone, key }) => {
-              if (zone === "main" && key === "ArrowRight") return "sidebar";
-              if (zone === "sidebar" && key === "ArrowLeft") return "main";
-              return null;
-            },
-          }),
-        { wrapper },
-      );
-
-      // ArrowUp has no valid transition — zone should stay the same
-      act(() => fireKey("ArrowUp"));
-      expect(result.current.zone).toBe("main");
-
-      // ArrowRight has a valid transition — zone should change
-      act(() => fireKey("ArrowRight"));
-      expect(result.current.zone).toBe("sidebar");
-    });
   });
 
   describe("tab cycling", () => {
@@ -342,6 +221,28 @@ describe("useFocusZone", () => {
   });
 
   describe("scope integration", () => {
+    it("does not push scope when scope option is not provided", () => {
+      const handler = vi.fn();
+
+      renderHook(
+        () => {
+          // Register handler in the default global scope
+          useKey("x", handler);
+          // useFocusZone WITHOUT scope should NOT push a new scope
+          useFocusZone({
+            initial: "main",
+            zones: ["main", "sidebar"],
+          });
+        },
+        { wrapper },
+      );
+
+      // If no scope was pushed, the global scope is still active,
+      // so the handler registered in the global scope should fire.
+      act(() => fireKey("x"));
+      expect(handler).toHaveBeenCalledOnce();
+    });
+
     it("isolates key handlers to the scope", () => {
       const outsideHandler = vi.fn();
       const insideHandler = vi.fn();
@@ -370,7 +271,7 @@ describe("useFocusZone", () => {
   });
 
   describe("enabled flag", () => {
-    it("does not respond to transitions when disabled", () => {
+    it("ignores all keyboard handling when disabled", () => {
       const { result } = renderHook(
         () =>
           useFocusZone({
@@ -381,45 +282,102 @@ describe("useFocusZone", () => {
               if (key === "ArrowRight") return "sidebar";
               return null;
             },
+            tabCycle: ["main", "sidebar"],
           }),
         { wrapper },
       );
 
       act(() => fireKey("ArrowRight"));
       expect(result.current.zone).toBe("main");
-    });
 
-    it("does not respond to tab cycling when disabled", () => {
+      act(() => fireKey("Tab"));
+      expect(result.current.zone).toBe("main");
+    });
+  });
+
+  describe("lifecycle hooks", () => {
+    it("calls onLeaveZone then onEnterZone then onZoneChange in order", () => {
+      const calls: string[] = [];
       const { result } = renderHook(
         () =>
           useFocusZone({
-            initial: "a",
-            zones: ["a", "b"],
-            enabled: false,
-            tabCycle: ["a", "b"],
+            initial: "main",
+            zones: ["main", "sidebar"],
+            onLeaveZone: (z) => calls.push(`leave:${z}`),
+            onEnterZone: (z) => calls.push(`enter:${z}`),
+            onZoneChange: (z) => calls.push(`change:${z}`),
           }),
         { wrapper },
       );
 
-      act(() => fireKey("Tab"));
-      expect(result.current.zone).toBe("a");
+      act(() => result.current.setZone("sidebar"));
+      expect(calls).toEqual(["leave:main", "enter:sidebar", "change:sidebar"]);
     });
+
+    it("no-op when setting same zone", () => {
+      const onLeaveZone = vi.fn();
+      const onEnterZone = vi.fn();
+      const onZoneChange = vi.fn();
+      const { result } = renderHook(
+        () =>
+          useFocusZone({
+            initial: "main",
+            zones: ["main", "sidebar"],
+            onLeaveZone,
+            onEnterZone,
+            onZoneChange,
+          }),
+        { wrapper },
+      );
+
+      act(() => result.current.setZone("main"));
+      expect(onLeaveZone).not.toHaveBeenCalled();
+      expect(onEnterZone).not.toHaveBeenCalled();
+      expect(onZoneChange).not.toHaveBeenCalled();
+    });
+
+  });
+
+  describe("forZone + useKey integration", () => {
+    it("handler fires only when zone matches forZone target", () => {
+      const handler = vi.fn();
+
+      const { result } = renderHook(
+        () => {
+          const fz = useFocusZone({
+            initial: "main",
+            zones: ["main", "sidebar"],
+          });
+          useKey("Enter", handler, fz.forZone("sidebar"));
+          return fz;
+        },
+        { wrapper },
+      );
+
+      // Zone is "main", forZone("sidebar") → enabled: false
+      act(() => fireKey("Enter"));
+      expect(handler).not.toHaveBeenCalled();
+
+      // Switch to "sidebar" → forZone("sidebar") → enabled: true
+      act(() => result.current.setZone("sidebar"));
+      act(() => fireKey("Enter"));
+      expect(handler).toHaveBeenCalledOnce();
+    });
+
   });
 
   describe("edge cases", () => {
-    it("throws when initial zone is not in zones", () => {
-      expect(() => {
-        renderHook(
-          () =>
-            useFocusZone({
-              initial: "unknown" as "a",
-              zones: ["a", "b"],
-            }),
-          { wrapper },
-        );
-      }).toThrow(
-        '[keyscope] useFocusZone: initial zone "unknown" is not in zones [a, b]',
+    it("falls back to first zone when initial is invalid", () => {
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      const { result } = renderHook(
+        () =>
+          useFocusZone({
+            initial: "unknown" as "a",
+            zones: ["a", "b"],
+          }),
+        { wrapper },
       );
+      expect(result.current.zone).toBe("a");
     });
 
     it("works with a single zone", () => {

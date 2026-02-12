@@ -1,6 +1,7 @@
 import { useEffectEvent, type RefObject, type KeyboardEvent } from "react";
 import { useKey } from "./use-key.js";
 import { useDomNavigationCore } from "../internal/use-dom-navigation-core.js";
+import { keys } from "../utils/keys.js";
 import type { NavigationRole } from "../utils/types.js";
 
 interface UseNavigationBaseOptions {
@@ -13,10 +14,13 @@ interface UseNavigationBaseOptions {
   onFocusChange?: (value: string) => void;
   wrap?: boolean;
   enabled?: boolean;
+  preventDefault?: boolean;
   onBoundaryReached?: (direction: "up" | "down") => void;
   initialValue?: string | null;
   upKeys?: string[];
   downKeys?: string[];
+  orientation?: "vertical" | "horizontal";
+  skipDisabled?: boolean;
 }
 
 interface UseScopedNavigationOptions extends UseNavigationBaseOptions {
@@ -52,10 +56,13 @@ export function useNavigation({
   onFocusChange,
   wrap = true,
   enabled = true,
+  preventDefault: preventDefaultOpt = true,
   onBoundaryReached,
   initialValue = null,
-  upKeys = ["ArrowUp"],
-  downKeys = ["ArrowDown"],
+  orientation = "vertical",
+  upKeys = orientation === "vertical" ? ["ArrowUp"] : ["ArrowLeft"],
+  downKeys = orientation === "vertical" ? ["ArrowDown"] : ["ArrowRight"],
+  skipDisabled,
   ...rest
 }: UseNavigationOptions): UseNavigationReturn {
   const mode = "mode" in rest ? rest.mode ?? "scoped" : "scoped";
@@ -74,6 +81,7 @@ export function useNavigation({
       wrap,
       onBoundaryReached,
       initialValue,
+      skipDisabled,
     });
 
   // Shared key→action dispatch (used by both scoped and local modes)
@@ -96,30 +104,35 @@ export function useNavigation({
   const scopedEnabled = enabled && isScoped;
   const keyOptions = {
     enabled: scopedEnabled,
-    preventDefault: true,
+    preventDefault: preventDefaultOpt,
     targetRef: containerRef,
     requireFocusWithin,
   } as const;
 
-  useKey(upKeys, (e) => dispatch(e.key, e), keyOptions);
-  useKey(downKeys, (e) => dispatch(e.key, e), keyOptions);
-  useKey("Home", (e) => dispatch("Home", e), keyOptions);
-  useKey("End", (e) => dispatch("End", e), keyOptions);
-  useKey("Enter", (e) => dispatch("Enter", e), keyOptions);
-  useKey(" ", (e) => dispatch(" ", e), keyOptions);
+  useKey(
+    {
+      ...keys(upKeys, (e) => dispatch(e.key, e)),
+      ...keys(downKeys, (e) => dispatch(e.key, e)),
+      Home: (e) => dispatch("Home", e),
+      End: (e) => dispatch("End", e),
+      Enter: (e) => dispatch("Enter", e),
+      " ": dispatch.bind(null, " "),
+    },
+    keyOptions,
+  );
 
-  const stableOnKeyDown = useEffectEvent((event: KeyboardEvent) => {
+  const onKeyDown = (event: KeyboardEvent) => {
     if (!enabled) return;
     const key = event.key;
     const handled = upKeys.includes(key) || downKeys.includes(key)
       || key === "Home" || key === "End" || key === "Enter" || key === " ";
     if (!handled) return;
-    event.preventDefault();
+    if (preventDefaultOpt) event.preventDefault();
     dispatch(key, event.nativeEvent);
-  });
+  };
 
   if (!isScoped) {
-    return { focusedValue, isFocused, focus, onKeyDown: stableOnKeyDown };
+    return { focusedValue, isFocused, focus, onKeyDown };
   }
 
   return { focusedValue, isFocused, focus };

@@ -148,6 +148,8 @@ interface UseFocusZoneOptions<T extends string> {
   zones: readonly T[];
   zone?: T;                                    // controlled mode
   onZoneChange?: (zone: T) => void;
+  onLeaveZone?: (zone: T) => void;             // fires before leaving current zone
+  onEnterZone?: (zone: T) => void;             // fires before entering new zone
   transitions?: (params: {
     zone: T;
     key: "ArrowLeft" | "ArrowRight" | "ArrowUp" | "ArrowDown" | "Tab";
@@ -165,7 +167,7 @@ interface UseFocusZoneReturn<T extends string> {
   zone: T;
   setZone: (zone: T) => void;
   inZone: (...zones: T[]) => boolean;
-  forZone: (target: T) => UseKeyOptions;       // { enabled: zone === target }
+  forZone: (target: T, extra?: UseKeyOptions) => UseKeyOptions;
 }
 ```
 
@@ -189,7 +191,7 @@ useKey("Enter", () => openItem(), forZone("sidebar"));
 useKey("Enter", () => editContent(), forZone("content"));
 ```
 
-The `forZone` helper returns `{ enabled: true }` when the current zone matches the target, and `{ enabled: false }` otherwise. This lets you bind different handlers to the same key in different zones.
+The `forZone` helper returns `{ enabled: true }` when the current zone matches the target, and `{ enabled: false }` otherwise. This lets you bind different handlers to the same key in different zones. Pass an optional second argument to merge extra options: `forZone("sidebar", { preventDefault: true })`.
 
 `tabCycle` enables Tab and Shift+Tab to cycle through the listed zones in order, with `preventDefault` set automatically.
 
@@ -209,15 +211,18 @@ interface UseNavigationBaseOptions {
   role: NavigationRole;                        // "radio" | "checkbox" | "option" | "menuitem"
   value?: string | null;                       // controlled focused value
   onValueChange?: (value: string) => void;
-  onSelect?: (value: string) => void;          // Space key
-  onEnter?: (value: string) => void;           // Enter key
+  onSelect?: (value: string, event: KeyboardEvent) => void;   // Space key (ARIA selection)
+  onEnter?: (value: string, event: KeyboardEvent) => void;    // Enter key (ARIA activation, falls back to onSelect)
+  preventDefault?: boolean;                    // default: true
   onFocusChange?: (value: string) => void;
   wrap?: boolean;                              // default: true
   enabled?: boolean;                           // default: true
   onBoundaryReached?: (direction: "up" | "down") => void;
   initialValue?: string | null;
-  upKeys?: string[];                           // default: ["ArrowUp"]
-  downKeys?: string[];                         // default: ["ArrowDown"]
+  orientation?: "vertical" | "horizontal";     // default: "vertical"
+  skipDisabled?: boolean;                      // skip aria-disabled items
+  upKeys?: string[];                           // default: ["ArrowUp"] (or ["ArrowLeft"] if horizontal)
+  downKeys?: string[];                         // default: ["ArrowDown"] (or ["ArrowRight"] if horizontal)
 }
 
 // Scoped mode (default): keys registered via KeyboardProvider
@@ -270,6 +275,10 @@ return <div ref={containerRef} onKeyDown={onKeyDown}>...</div>;
 
 Items are queried from the DOM using `[role="${role}"][data-value]:not([aria-disabled="true"])` inside the container. Each navigable item needs a `role` and `data-value` attribute.
 
+`onSelect` fires on **Space** (ARIA selection pattern), `onEnter` fires on **Enter** (ARIA activation pattern). If `onEnter` is not provided, Enter falls back to `onSelect`. For most components, passing the same handler to both is fine.
+
+`useNavigation` defaults to `preventDefault: true` in both scoped and local modes — this prevents page scrolling on arrow keys, Space, and Home/End. Set `preventDefault: false` to override.
+
 ### useTabNavigation
 
 Keyboard navigation for tab lists. Handles arrow keys and Home/End. Queries `[role="tab"]:not([disabled])` elements inside the container.
@@ -316,6 +325,52 @@ useKey({
 });
 ```
 
+### useFocusTrap
+
+Trap Tab focus within a container element. Useful for modals and dialogs.
+
+```ts
+function useFocusTrap(
+  containerRef: RefObject<HTMLElement | null>,
+  options?: UseFocusTrapOptions,
+): void;
+```
+
+```ts
+interface UseFocusTrapOptions {
+  initialFocus?: RefObject<HTMLElement | null>;
+  restoreFocus?: boolean;                      // default: true
+  enabled?: boolean;                           // default: true
+}
+```
+
+```tsx
+const containerRef = useRef<HTMLDivElement>(null);
+useFocusTrap(containerRef, { enabled: isOpen });
+```
+
+Queries focusable elements on each Tab press, so dynamic content is handled automatically. Focus is restored to the previously focused element when the trap is disabled or unmounts.
+
+> **Note:** `useFocusTrap` operates independently of `KeyboardProvider` and the scope system. It attaches its own `keydown` listener directly on the container element. This is by design — focus trapping is a DOM-level concern that should work regardless of which scope is active. Use the `enabled` option for conditional trapping.
+
+### useScrollLock
+
+Lock scroll on an element while a component is mounted. Uses reference counting, so multiple locks on the same element work correctly — scroll is only restored when all locks release.
+
+```ts
+function useScrollLock(
+  target?: RefObject<HTMLElement | null>,  // default: document.body
+  enabled?: boolean,                       // default: true
+): void;
+```
+
+```tsx
+const containerRef = useRef<HTMLDivElement>(null);
+useScrollLock(containerRef, isOpen);
+```
+
+> **Note:** `useScrollLock` operates independently of `KeyboardProvider`. It directly manages `overflow: hidden` on the target element.
+
 ### useOptionalKeyboardContext
 
 Returns the keyboard context or `null` if no `KeyboardProvider` exists in the tree. Useful for libraries or components that optionally integrate with keyscope.
@@ -340,6 +395,22 @@ if (ctx) {
 | `targetRef` | `RefObject<HTMLElement \| null>` | -- | Only fire when event target is within this element |
 | `requireFocusWithin` | `boolean` | `false` | Used with `targetRef` to require focus within the target |
 | `preventDefault` | `boolean` | `false` | Call `event.preventDefault()` before the handler |
+
+## Key Matching
+
+Hotkey strings are **case-insensitive** — `"escape"` and `"Escape"` both match the Escape key.
+
+**Uppercase single letters imply Shift.** `useKey("G", handler)` is equivalent to `useKey("shift+g", handler)` — both match Shift+G. Lowercase `useKey("g", handler)` matches `g` without Shift.
+
+Modifier matching is **strict**: `useKey("ctrl+s", handler)` only matches Ctrl+S, not Ctrl+Shift+S. Extra modifiers cause a non-match.
+
+```tsx
+useKey("g", () => goToTop());       // matches g (no Shift)
+useKey("G", () => goToBottom());    // matches Shift+G
+useKey("shift+g", () => {});        // same as "G"
+useKey("ctrl+s", () => save());     // matches Ctrl+S only
+useKey("mod+k", () => search());    // Meta+K on Mac, Ctrl+K elsewhere
+```
 
 ## Patterns
 

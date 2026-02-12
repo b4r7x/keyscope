@@ -12,6 +12,7 @@ export interface UseDomNavigationCoreOptions {
   wrap?: boolean;
   onBoundaryReached?: (direction: "up" | "down") => void;
   initialValue?: string | null;
+  skipDisabled?: boolean;
 }
 
 export interface UseDomNavigationCoreReturn {
@@ -36,17 +37,20 @@ export function useDomNavigationCore({
   wrap = true,
   onBoundaryReached,
   initialValue = null,
+  skipDisabled = true,
 }: UseDomNavigationCoreOptions): UseDomNavigationCoreReturn {
   const [internalValue, setInternalValue] = useState<string | null>(initialValue);
   const isControlled = value !== undefined;
   const focusedValue = isControlled ? value ?? null : internalValue;
 
+  const selector = skipDisabled
+    ? `[role="${role}"]:not([aria-disabled="true"])`
+    : `[role="${role}"]`;
+
   const getElements = () => {
     if (!containerRef.current) return [];
     return Array.from(
-      containerRef.current.querySelectorAll<HTMLElement>(
-        `[role="${role}"]:not([aria-disabled="true"])`
-      )
+      containerRef.current.querySelectorAll<HTMLElement>(selector)
     );
   };
 

@@ -1,7 +1,8 @@
 import { useEffect, useEffectEvent } from "react";
-import type { HandlerOptions } from "../providers/keyboard-provider.js";
-import { useKeyboardContext } from "../context/keyboard-context.js";
 import type { RefObject } from "react";
+import type { HandlerOptions } from "../providers/keyboard-provider.js";
+import { useOptionalKeyboardContext } from "../context/keyboard-context.js";
+import { normalizeKeyInput } from "../internal/normalize-key-input.js";
 
 export interface UseKeyOptions {
   enabled?: boolean;
@@ -39,28 +40,11 @@ export function useKey(
   second?: KeyHandler | UseKeyOptions,
   third?: UseKeyOptions,
 ): void {
-  // Normalize all forms into a key map and options
-  let handlerMap: Record<string, KeyHandler>;
-  let options: UseKeyOptions | undefined;
+  const { handlerMap, options } = normalizeKeyInput<UseKeyOptions>(first, second, third);
 
-  if (typeof first === "string") {
-    // Overload 1: single key
-    handlerMap = { [first]: second as KeyHandler };
-    options = third;
-  } else if (Array.isArray(first)) {
-    // Overload 2: array of keys
-    const handler = second as KeyHandler;
-    handlerMap = Object.fromEntries(
-      (first as readonly string[]).map((k) => [k, handler]),
-    );
-    options = third;
-  } else {
-    // Overload 3: key map
-    handlerMap = first as Record<string, KeyHandler>;
-    options = second as UseKeyOptions | undefined;
-  }
-
-  const { register, activeScope } = useKeyboardContext();
+  const ctx = useOptionalKeyboardContext();
+  const register = ctx?.register ?? null;
+  const activeScope = ctx?.activeScope ?? null;
 
   const stableDispatch = useEffectEvent((key: string, event: KeyboardEvent) => {
     handlerMap[key]?.(event);
@@ -83,7 +67,7 @@ export function useKey(
 
   useEffect(() => {
     if (options?.enabled === false) return;
-    if (!activeScope) return;
+    if (!register || !activeScope) return;
 
     const keys = keysKey.split(",");
     const cleanups = keys.map((key) =>
