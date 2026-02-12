@@ -12,6 +12,11 @@ export { useNavigation } from "./hooks/use-navigation.js";
 export { useTabNavigation } from "./hooks/use-tab-navigation.js";
 export { useFocusZone } from "./hooks/use-focus-zone.js";
 
+// DOM hooks
+export { useFocusTrap } from "./hooks/use-focus-trap.js";
+export type { UseFocusTrapOptions } from "./hooks/use-focus-trap.js";
+export { useScrollLock } from "./hooks/use-scroll-lock.js";
+
 // Utilities
 export { keys } from "./utils/keys.js";
 

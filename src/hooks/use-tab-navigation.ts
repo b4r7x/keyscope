@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import type { RefObject, KeyboardEvent } from "react";
 
 type Orientation = "horizontal" | "vertical";
@@ -6,6 +7,7 @@ interface UseTabNavigationOptions {
   containerRef: RefObject<HTMLElement | null>;
   orientation?: Orientation;
   wrap?: boolean;
+  enabled?: boolean;
 }
 
 interface UseTabNavigationReturn {
@@ -23,8 +25,10 @@ export function useTabNavigation({
   containerRef,
   orientation = "horizontal",
   wrap = true,
+  enabled = true,
 }: UseTabNavigationOptions): UseTabNavigationReturn {
-  const onKeyDown = (event: KeyboardEvent) => {
+  const onKeyDown = useCallback((event: KeyboardEvent) => {
+    if (!enabled) return;
     const isHorizontal = orientation === "horizontal";
     const prevKey = isHorizontal ? "ArrowLeft" : "ArrowUp";
     const nextKey = isHorizontal ? "ArrowRight" : "ArrowDown";
@@ -77,7 +81,7 @@ export function useTabNavigation({
       nextTab.focus();
       nextTab.click();
     }
-  };
+  }, [containerRef, orientation, wrap, enabled]);
 
   return { onKeyDown };
 }

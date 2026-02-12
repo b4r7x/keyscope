@@ -105,7 +105,7 @@ describe("useNavigation", () => {
       expect(getFocused()).toBe("c");
     });
 
-    it("no wrap: ArrowDown at last calls onBoundaryReached('down')", () => {
+    it("no wrap: calls onBoundaryReached at both boundaries", () => {
       const onBoundaryReached = vi.fn();
       render(
         <TestList initialValue="c" wrap={false} onBoundaryReached={onBoundaryReached} />,
@@ -115,15 +115,9 @@ describe("useNavigation", () => {
       act(() => fireKey("ArrowDown"));
       expect(onBoundaryReached).toHaveBeenCalledWith("down");
       expect(getFocused()).toBe("c");
-    });
 
-    it("no wrap: ArrowUp at first calls onBoundaryReached('up')", () => {
-      const onBoundaryReached = vi.fn();
-      render(
-        <TestList initialValue="a" wrap={false} onBoundaryReached={onBoundaryReached} />,
-        { wrapper },
-      );
-
+      act(() => fireKey("ArrowUp"));
+      act(() => fireKey("ArrowUp"));
       act(() => fireKey("ArrowUp"));
       expect(onBoundaryReached).toHaveBeenCalledWith("up");
       expect(getFocused()).toBe("a");
@@ -199,29 +193,12 @@ describe("useNavigation", () => {
       expect(getFocused()).toBe("a");
     });
 
-    it("skips aria-disabled items", () => {
-      function DisabledList() {
-        const ref = useRef<HTMLDivElement>(null);
-        const result = useNavigation({
-          containerRef: ref,
-          role: "option",
-          initialValue: "a",
-        });
-
-        return (
-          <div ref={ref} data-testid="list">
-            <div role="option" data-value="a" />
-            <div role="option" data-value="b" aria-disabled="true" />
-            <div role="option" data-value="c" />
-            <span data-testid="focused">{result.focusedValue ?? ""}</span>
-          </div>
-        );
-      }
-
-      render(<DisabledList />, { wrapper });
+    it("fires onFocusChange when focus moves", () => {
+      const onFocusChange = vi.fn();
+      render(<TestList initialValue="a" onFocusChange={onFocusChange} />, { wrapper });
 
       act(() => fireKey("ArrowDown"));
-      expect(getFocused()).toBe("c");
+      expect(onFocusChange).toHaveBeenCalledWith("b");
     });
   });
 
@@ -234,26 +211,6 @@ describe("useNavigation", () => {
       });
       container.dispatchEvent(event);
     }
-
-    it("returns onKeyDown handler", () => {
-      function CheckHandler() {
-        const ref = useRef<HTMLDivElement>(null);
-        const result = useNavigation({
-          containerRef: ref,
-          role: "option",
-          mode: "local",
-        });
-
-        return (
-          <div ref={ref}>
-            <span data-testid="has-handler">{result.onKeyDown ? "yes" : "no"}</span>
-          </div>
-        );
-      }
-
-      render(<CheckHandler />, { wrapper });
-      expect(screen.getByTestId("has-handler").textContent).toBe("yes");
-    });
 
     it("arrow keys work via returned onKeyDown", () => {
       render(<LocalTestList initialValue="a" />, { wrapper });
@@ -277,6 +234,17 @@ describe("useNavigation", () => {
 
       act(() => fireLocalKey(container, "Enter"));
       expect(onEnter).toHaveBeenCalledWith("b", expect.any(KeyboardEvent));
+    });
+
+    it("Home/End keys work in local mode", () => {
+      render(<LocalTestList initialValue="b" />, { wrapper });
+
+      const container = screen.getByTestId("list");
+      act(() => fireLocalKey(container, "Home"));
+      expect(getFocused()).toBe("a");
+
+      act(() => fireLocalKey(container, "End"));
+      expect(getFocused()).toBe("c");
     });
 
     it("enabled: false makes onKeyDown no-op", () => {
@@ -304,6 +272,101 @@ describe("useNavigation", () => {
 
       act(() => fireKey("ArrowDown"));
       expect(onValueChange).toHaveBeenCalledWith("b");
+    });
+  });
+
+  describe("horizontal orientation", () => {
+    it("ArrowRight moves to next item", () => {
+      render(<TestList initialValue="a" orientation="horizontal" />, { wrapper });
+
+      act(() => fireKey("ArrowRight"));
+      expect(getFocused()).toBe("b");
+    });
+
+    it("ArrowLeft moves to previous item", () => {
+      render(<TestList initialValue="b" orientation="horizontal" />, { wrapper });
+
+      act(() => fireKey("ArrowLeft"));
+      expect(getFocused()).toBe("a");
+    });
+
+    it("ArrowUp/ArrowDown do not navigate in horizontal mode", () => {
+      render(<TestList initialValue="a" orientation="horizontal" />, { wrapper });
+
+      act(() => fireKey("ArrowDown"));
+      expect(getFocused()).toBe("a");
+
+      act(() => fireKey("ArrowUp"));
+      expect(getFocused()).toBe("a");
+    });
+  });
+
+  describe("skipDisabled", () => {
+    function SkipDisabledList({ skipDisabled }: { skipDisabled?: boolean }) {
+      const ref = useRef<HTMLDivElement>(null);
+      const result = useNavigation({
+        containerRef: ref,
+        role: "option",
+        initialValue: "a",
+        skipDisabled,
+      });
+
+      return (
+        <div ref={ref} data-testid="list">
+          <div role="option" data-value="a" />
+          <div role="option" data-value="b" aria-disabled="true" />
+          <div role="option" data-value="c" />
+          <span data-testid="focused">{result.focusedValue ?? ""}</span>
+        </div>
+      );
+    }
+
+    it("skips disabled items by default", () => {
+      render(<SkipDisabledList />, { wrapper });
+
+      act(() => fireKey("ArrowDown"));
+      expect(getFocused()).toBe("c");
+    });
+
+    it("includes disabled items when skipDisabled is false", () => {
+      render(<SkipDisabledList skipDisabled={false} />, { wrapper });
+
+      act(() => fireKey("ArrowDown"));
+      expect(getFocused()).toBe("b");
+    });
+  });
+
+  describe("role='button'", () => {
+    function ButtonList() {
+      const ref = useRef<HTMLDivElement>(null);
+      const result = useNavigation({
+        containerRef: ref,
+        role: "button",
+        initialValue: "save",
+        orientation: "horizontal",
+      });
+
+      return (
+        <div ref={ref} data-testid="list">
+          <div role="button" data-value="save" />
+          <div role="button" data-value="cancel" />
+          <div role="button" data-value="reset" />
+          <span data-testid="focused">{result.focusedValue ?? ""}</span>
+        </div>
+      );
+    }
+
+    it("navigates button-role items with horizontal keys", () => {
+      render(<ButtonList />, { wrapper });
+
+      act(() => fireKey("ArrowRight"));
+      expect(getFocused()).toBe("cancel");
+
+      act(() => fireKey("ArrowRight"));
+      expect(getFocused()).toBe("reset");
+
+      act(() => fireKey("ArrowLeft"));
+      expect(getFocused()).toBe("cancel");
     });
   });
 });

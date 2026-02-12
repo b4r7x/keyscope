@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { render, cleanup, screen, act } from "@testing-library/react";
-import { useRef, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useRef } from "react";
 import { useTabNavigation } from "./use-tab-navigation";
 
 type Orientation = "horizontal" | "vertical";
@@ -9,6 +9,7 @@ interface TestTabListProps {
   tabs?: Array<{ id: string; label: string; disabled?: boolean }>;
   orientation?: Orientation;
   wrap?: boolean;
+  enabled?: boolean;
 }
 
 function TestTabList({
@@ -19,9 +20,10 @@ function TestTabList({
   ],
   orientation = "horizontal",
   wrap = true,
+  enabled,
 }: TestTabListProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { onKeyDown } = useTabNavigation({ containerRef, orientation, wrap });
+  const { onKeyDown } = useTabNavigation({ containerRef, orientation, wrap, enabled });
 
   return (
     <div
@@ -137,20 +139,16 @@ describe("useTabNavigation", () => {
   });
 
   describe("wrap: false", () => {
-    it("ArrowRight at last tab stays on last tab", () => {
-      render(<TestTabList wrap={false} />);
-      const tab3 = screen.getByTestId("tab-3");
-      tab3.focus();
-
-      act(() => fireKeyOnElement(tab3, "ArrowRight"));
-      expect(document.activeElement).toBe(screen.getByTestId("tab-3"));
-    });
-
-    it("ArrowLeft at first tab stays on first tab", () => {
+    it("does not wrap at boundaries", () => {
       render(<TestTabList wrap={false} />);
       const tab1 = screen.getByTestId("tab-1");
-      tab1.focus();
+      const tab3 = screen.getByTestId("tab-3");
 
+      tab3.focus();
+      act(() => fireKeyOnElement(tab3, "ArrowRight"));
+      expect(document.activeElement).toBe(screen.getByTestId("tab-3"));
+
+      tab1.focus();
       act(() => fireKeyOnElement(tab1, "ArrowLeft"));
       expect(document.activeElement).toBe(screen.getByTestId("tab-1"));
     });
@@ -196,6 +194,15 @@ describe("useTabNavigation", () => {
 
       // Should not throw
       act(() => fireKeyOnElement(tablist, "ArrowRight"));
+    });
+
+    it("should not handle keys when enabled is false", () => {
+      render(<TestTabList enabled={false} />);
+      const tab1 = screen.getByTestId("tab-1");
+      tab1.focus();
+
+      act(() => fireKeyOnElement(tab1, "ArrowRight"));
+      expect(document.activeElement).toBe(screen.getByTestId("tab-1"));
     });
 
     it("handles single tab", () => {

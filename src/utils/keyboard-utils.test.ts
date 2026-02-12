@@ -20,12 +20,11 @@ describe("matchesHotkey", () => {
   });
 
   it("should match key with Ctrl modifier", () => {
-    expect(matchesHotkey(makeKeyEvent("s", { ctrl: true }), "Ctrl+S")).toBe(true);
+    expect(matchesHotkey(makeKeyEvent("s", { ctrl: true }), "Ctrl+s")).toBe(true);
   });
 
-  it("should be case insensitive", () => {
+  it("should be case insensitive for multi-char keys", () => {
     expect(matchesHotkey(makeKeyEvent("Enter"), "enter")).toBe(true);
-    expect(matchesHotkey(makeKeyEvent("a"), "A")).toBe(true);
   });
 
   it("should match multiple modifiers", () => {
@@ -83,6 +82,24 @@ describe("matchesHotkey", () => {
 
   it("should not match mod+key without any modifier", () => {
     expect(matchesHotkey(makeKeyEvent("k"), "mod+k")).toBe(false);
+  });
+});
+
+describe("matchesHotkey uppercase letter shift matching", () => {
+  it("should match uppercase G when shift is held", () => {
+    expect(matchesHotkey(makeKeyEvent("G", { shift: true }), "G")).toBe(true);
+  });
+
+  it("should match explicit shift+g when shift is held", () => {
+    expect(matchesHotkey(makeKeyEvent("G", { shift: true }), "shift+g")).toBe(true);
+  });
+
+  it("should not match uppercase G hotkey without shift", () => {
+    expect(matchesHotkey(makeKeyEvent("g"), "G")).toBe(false);
+  });
+
+  it("should match lowercase g without shift", () => {
+    expect(matchesHotkey(makeKeyEvent("g"), "g")).toBe(true);
   });
 });
 

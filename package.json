@@ -1,9 +1,9 @@
 {
   "name": "keyscope",
-  "version": "0.2.0",
+  "version": "0.1.0",
   "description": "Composable, scoped keyboard navigation hooks for React",
   "license": "MIT",
-  "author": "voitz",
+  "author": "b4r7x",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/b4r7x/keyscope.git"
@@ -19,19 +19,26 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
+  "bugs": {
+    "url": "https://github.com/b4r7x/keyscope/issues"
+  },
   "scripts": {
-    "build": "tsc",
+    "build": "rm -rf dist && tsc",
     "dev": "tsc --watch",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "prepublishOnly": "rm -rf dist && tsc"
   },
   "peerDependencies": {
     "react": "^19.0.0"
   },
   "devDependencies": {
     "@testing-library/react": "^16.0.0",
+    "@types/node": "^25.2.3",
     "@types/react": "^19.0.0",
     "jsdom": "^28.0.0",
     "react": "^19.0.0",
@@ -40,9 +47,16 @@
     "vitest": "^3.0.0"
   },
   "keywords": [
-    "react", "keyboard", "hotkeys", "shortcuts",
-    "navigation", "focus", "accessibility", "a11y",
-    "scoped", "zones"
+    "react",
+    "keyboard",
+    "hotkeys",
+    "shortcuts",
+    "navigation",
+    "focus",
+    "accessibility",
+    "a11y",
+    "scoped",
+    "zones"
   ],
   "publishConfig": {
     "access": "public"

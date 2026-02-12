@@ -10,15 +10,24 @@ const KEY_ALIASES: Record<string, string> = {
 let _isMac: boolean | null = null;
 function isMac(): boolean {
   if (_isMac === null) {
-    _isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.userAgent);
+    _isMac =
+      typeof window !== "undefined" &&
+      typeof navigator !== "undefined" &&
+      /Mac|iPhone|iPad/.test(navigator.userAgent);
   }
   return _isMac;
 }
 
 export function matchesHotkey(event: KeyboardEvent, hotkey: string): boolean {
-  const parts = hotkey.toLowerCase().split("+");
-  const key = parts.pop() ?? "";
+  const rawParts = hotkey.split("+");
+  const rawKey = rawParts.pop() ?? "";
+  const parts = rawParts.map(p => p.toLowerCase());
   const mods = new Set(parts);
+
+  // Single uppercase letter implies shift (e.g., "G" === "shift+g")
+  if (rawKey.length === 1 && rawKey !== rawKey.toLowerCase()) {
+    mods.add("shift");
+  }
 
   if (mods.has("mod")) {
     mods.delete("mod");
@@ -26,7 +35,7 @@ export function matchesHotkey(event: KeyboardEvent, hotkey: string): boolean {
     else mods.add("ctrl");
   }
 
-  const normalizedKey = KEY_ALIASES[key] ?? key;
+  const normalizedKey = KEY_ALIASES[rawKey.toLowerCase()] ?? rawKey.toLowerCase();
   const eventKey = event.key.toLowerCase();
 
   return (

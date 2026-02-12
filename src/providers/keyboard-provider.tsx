@@ -34,26 +34,23 @@ function isWithinTarget(eventTarget: EventTarget | null, options?: HandlerOption
 }
 
 export function KeyboardProvider({ children }: { children: ReactNode }) {
-  const [scopeStack, setScopeStack] = useState<string[]>(["global"]);
-  const scopeStackRef = useRef(scopeStack);
-  scopeStackRef.current = scopeStack;
+  const [scopeStack, setScopeStack] = useState<Array<{ name: string; id: number }>>([{ name: "global", id: 0 }]);
   const handlers = useRef(new Map<string, HandlerMap>());
   const nextHandlerId = useRef(1);
+  const nextScopeId = useRef(1);
 
-  const activeScope = scopeStack[scopeStack.length - 1] ?? null;
+  const activeScope = scopeStack[scopeStack.length - 1]?.name ?? null;
 
   const pushScope = useCallback((scope: string) => {
-    setScopeStack((prev) => [...prev, scope]);
+    const id = nextScopeId.current++;
+    setScopeStack((prev) => [...prev, { name: scope, id }]);
     return () => {
       setScopeStack((prev) => {
-        const idx = prev.lastIndexOf(scope);
-        if (idx < 0) return prev;
-        return [...prev.slice(0, idx), ...prev.slice(idx + 1)];
-      });
-      queueMicrotask(() => {
-        if (!scopeStackRef.current.includes(scope)) {
+        const next = prev.filter((entry) => entry.id !== id);
+        if (!next.some((entry) => entry.name === scope)) {
           handlers.current.delete(scope);
         }
+        return next;
       });
     };
   }, []);
@@ -61,12 +58,13 @@ export function KeyboardProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (event.defaultPrevented) return;
+
+      const isInput = isInputElement(event.target);
+
       if (!activeScope) return;
 
       const scopeHandlers = handlers.current.get(activeScope);
       if (!scopeHandlers) return;
-
-      const isInput = isInputElement(event.target);
 
       for (const [hotkey, entries] of scopeHandlers) {
         if (matchesHotkey(event, hotkey)) {

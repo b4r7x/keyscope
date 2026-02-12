@@ -1,1 +1,1 @@
-export type NavigationRole = "radio" | "checkbox" | "option" | "menuitem";
+export type NavigationRole = "radio" | "checkbox" | "option" | "menuitem" | "button";

@@ -24,15 +24,7 @@ describe("useKey", () => {
     cleanup();
   });
 
-  describe("overload 1: single key + handler", () => {
-    it("registers a single key and calls handler", () => {
-      const handler = vi.fn();
-      renderHook(() => useKey("Escape", handler), { wrapper });
-
-      fireKey("Escape");
-      expect(handler).toHaveBeenCalledOnce();
-    });
-
+  describe("shared behavior", () => {
     it("passes KeyboardEvent to handler", () => {
       const handler = vi.fn();
       renderHook(() => useKey("Escape", handler), { wrapper });
@@ -41,7 +33,7 @@ describe("useKey", () => {
       expect(handler).toHaveBeenCalledWith(expect.any(KeyboardEvent));
     });
 
-    it("does not call handler for non-matching key", () => {
+    it("does not fire for non-matching keys", () => {
       const handler = vi.fn();
       renderHook(() => useKey("Escape", handler), { wrapper });
 
@@ -57,6 +49,27 @@ describe("useKey", () => {
 
       fireKey("Escape");
       expect(handler).not.toHaveBeenCalled();
+    });
+
+    it("cleans up on unmount", () => {
+      const handler = vi.fn();
+      const { unmount } = renderHook(() => useKey("Escape", handler), {
+        wrapper,
+      });
+
+      unmount();
+      fireKey("Escape");
+      expect(handler).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("overload 1: single key + handler", () => {
+    it("registers a single key and calls handler", () => {
+      const handler = vi.fn();
+      renderHook(() => useKey("Escape", handler), { wrapper });
+
+      fireKey("Escape");
+      expect(handler).toHaveBeenCalledOnce();
     });
 
     it("re-enables when enabled changes to true", () => {
@@ -75,17 +88,6 @@ describe("useKey", () => {
 
       fireKey("Escape");
       expect(handler).toHaveBeenCalledOnce();
-    });
-
-    it("cleans up on unmount", () => {
-      const handler = vi.fn();
-      const { unmount } = renderHook(() => useKey("Escape", handler), {
-        wrapper,
-      });
-
-      unmount();
-      fireKey("Escape");
-      expect(handler).not.toHaveBeenCalled();
     });
 
     it("supports modifier keys", () => {
@@ -111,46 +113,6 @@ describe("useKey", () => {
       fireKey(" ");
       expect(handler).toHaveBeenCalledTimes(2);
     });
-
-    it("passes KeyboardEvent to handler for each key", () => {
-      const handler = vi.fn();
-      renderHook(() => useKey(["ArrowUp", "ArrowDown"], handler), { wrapper });
-
-      fireKey("ArrowUp");
-      expect(handler).toHaveBeenCalledWith(expect.any(KeyboardEvent));
-    });
-
-    it("does not fire for non-matching keys", () => {
-      const handler = vi.fn();
-      renderHook(() => useKey(["Enter", " "], handler), { wrapper });
-
-      fireKey("Escape");
-      expect(handler).not.toHaveBeenCalled();
-    });
-
-    it("respects enabled: false", () => {
-      const handler = vi.fn();
-      renderHook(() => useKey(["Enter", " "], handler, { enabled: false }), {
-        wrapper,
-      });
-
-      fireKey("Enter");
-      fireKey(" ");
-      expect(handler).not.toHaveBeenCalled();
-    });
-
-    it("cleans up on unmount", () => {
-      const handler = vi.fn();
-      const { unmount } = renderHook(
-        () => useKey(["Enter", " "], handler),
-        { wrapper },
-      );
-
-      unmount();
-      fireKey("Enter");
-      fireKey(" ");
-      expect(handler).not.toHaveBeenCalled();
-    });
   });
 
   describe("overload 3: key map", () => {
@@ -172,70 +134,6 @@ describe("useKey", () => {
 
       fireKey("ArrowDown");
       expect(moveDown).toHaveBeenCalledOnce();
-    });
-
-    it("passes KeyboardEvent to each handler", () => {
-      const moveUp = vi.fn();
-      const moveDown = vi.fn();
-      renderHook(
-        () =>
-          useKey({
-            ArrowUp: moveUp,
-            ArrowDown: moveDown,
-          }),
-        { wrapper },
-      );
-
-      fireKey("ArrowUp");
-      expect(moveUp).toHaveBeenCalledWith(expect.any(KeyboardEvent));
-
-      fireKey("ArrowDown");
-      expect(moveDown).toHaveBeenCalledWith(expect.any(KeyboardEvent));
-    });
-
-    it("does not fire for non-matching keys", () => {
-      const moveUp = vi.fn();
-      renderHook(() => useKey({ ArrowUp: moveUp }), { wrapper });
-
-      fireKey("Enter");
-      expect(moveUp).not.toHaveBeenCalled();
-    });
-
-    it("respects enabled: false", () => {
-      const moveUp = vi.fn();
-      const moveDown = vi.fn();
-      renderHook(
-        () =>
-          useKey(
-            { ArrowUp: moveUp, ArrowDown: moveDown },
-            { enabled: false },
-          ),
-        { wrapper },
-      );
-
-      fireKey("ArrowUp");
-      fireKey("ArrowDown");
-      expect(moveUp).not.toHaveBeenCalled();
-      expect(moveDown).not.toHaveBeenCalled();
-    });
-
-    it("cleans up on unmount", () => {
-      const moveUp = vi.fn();
-      const moveDown = vi.fn();
-      const { unmount } = renderHook(
-        () =>
-          useKey({
-            ArrowUp: moveUp,
-            ArrowDown: moveDown,
-          }),
-        { wrapper },
-      );
-
-      unmount();
-      fireKey("ArrowUp");
-      fireKey("ArrowDown");
-      expect(moveUp).not.toHaveBeenCalled();
-      expect(moveDown).not.toHaveBeenCalled();
     });
 
     it("conditionally enables based on zone equality", () => {

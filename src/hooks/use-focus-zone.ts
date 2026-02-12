@@ -2,6 +2,7 @@ import { useState, useEffectEvent } from "react";
 import { useKey } from "./use-key.js";
 import type { UseKeyOptions } from "./use-key.js";
 import { useScope } from "./use-scope.js";
+import { keys } from "../utils/keys.js";
 
 type ZoneTransition<T extends string> = (params: {
   zone: T;
@@ -13,6 +14,8 @@ interface UseFocusZoneOptions<T extends string> {
   zones: readonly T[];
   zone?: T;
   onZoneChange?: (zone: T) => void;
+  onLeaveZone?: (zone: T) => void;
+  onEnterZone?: (zone: T) => void;
   transitions?: ZoneTransition<T>;
   tabCycle?: readonly T[];
   scope?: string;
@@ -38,12 +41,6 @@ export function useFocusZone<T extends string>(
 ): UseFocusZoneReturn<T> {
   const { initial, zones, enabled = true } = options;
 
-  if (!zones.includes(initial)) {
-    throw new Error(
-      `[keyscope] useFocusZone: initial zone "${initial}" is not in zones [${zones.join(", ")}]`
-    );
-  }
-
   const [internalZone, setInternalZone] = useState<T>(initial);
 
   const isControlled = options.zone !== undefined;
@@ -51,6 +48,9 @@ export function useFocusZone<T extends string>(
 
   // Single helper for ALL zone changes (controlled + uncontrolled)
   const setZoneValue = useEffectEvent((next: T) => {
+    if (next === currentZone) return;
+    options.onLeaveZone?.(currentZone);
+    options.onEnterZone?.(next);
     if (!isControlled) setInternalZone(next);
     options.onZoneChange?.(next);
   });
@@ -82,9 +82,7 @@ export function useFocusZone<T extends string>(
 
   // Arrow keys — single useKey call with object overload (no hook-in-loop)
   useKey(
-    Object.fromEntries(
-      ARROW_KEYS.map(k => [k, () => stableTransitions(k)])
-    ),
+    keys(ARROW_KEYS, (e) => stableTransitions(e.key as typeof ARROW_KEYS[number])),
     { enabled: enabled && options.transitions != null },
   );
 
@@ -98,15 +96,25 @@ export function useFocusZone<T extends string>(
     preventDefault: true,
   });
 
-  useScope(options.scope ?? "", { enabled: enabled && options.scope != null });
+  useScope(options.scope ?? "__noop__", { enabled: enabled && !!options.scope });
+
+  if (!zones.includes(initial)) {
+    if (process.env.NODE_ENV !== "production") {
+      console.error(
+        `[keyscope] useFocusZone: initial zone "${initial}" is not in zones [${zones.join(", ")}]`
+      );
+    }
+  }
+
+  const safeZone = zones.includes(currentZone) ? currentZone : zones[0]!;
 
   return {
-    zone: currentZone,
+    zone: safeZone,
     setZone: (zone: T) => setZoneValue(zone),
-    inZone: (...zones: T[]) => zones.includes(currentZone),
+    inZone: (...zones: T[]) => zones.includes(safeZone),
     forZone: (target: T, extra?: UseKeyOptions): UseKeyOptions => ({
       ...extra,
-      enabled: currentZone === target && (extra?.enabled ?? true),
+      enabled: safeZone === target && (extra?.enabled ?? true),
     }),
   };
 }
