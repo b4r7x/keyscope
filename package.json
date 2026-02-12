@@ -1,6 +1,6 @@
 {
   "name": "keyscope",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Composable, scoped keyboard navigation hooks for React",
   "license": "MIT",
   "author": "b4r7x",
