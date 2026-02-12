@@ -1,5 +1,7 @@
 # Navigation
 
+> Try the [List Navigation](../../examples/playground/) and [Tab Bar](../../examples/playground/) demos to see navigation in action.
+
 Two hooks for keyboard-driven list and tab navigation. Both query the DOM for items inside a container, then move focus between them with arrow keys, Home, End, Enter, and Space.
 
 ## useNavigation

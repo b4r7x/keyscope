@@ -35,6 +35,26 @@ npm install keyscope
 
 Requires React 19+ as a peer dependency.
 
+## Examples
+
+Interactive playground with live demos of every hook:
+
+```bash
+git clone https://github.com/b4r7x/keyscope.git
+cd keyscope
+pnpm install
+pnpm playground
+```
+
+Demos include:
+- **Global Shortcuts** — `useKey` basics
+- **Scoped Dialog** — `useScope` push/pop
+- **Focus Zones** — `useFocusZone` with zone-specific bindings
+- **List Navigation** — `useNavigation` with ARIA roles
+- **Tab Bar** — `useTabNavigation` for tab lists
+- **Command Palette** — composition of `useKey` + `useScope` + `useNavigation`
+- **Focus Trap** — `useFocusTrap` + `useScrollLock` in a modal
+
 ## Quick start
 
 ```tsx

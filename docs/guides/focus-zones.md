@@ -1,5 +1,7 @@
 # Focus Zones
 
+> Try the [Focus Zones demo](../../examples/playground/) to see zones in action.
+
 `useFocusZone` solves a specific problem: the same key should do different things depending on which panel is active.
 
 Think of an IDE layout. Enter in the file sidebar opens a file. Enter in the editor inserts a newline. Enter in the terminal runs a command. Same key, three different handlers. Zones let you express this without manually wiring `if (activePanel === "sidebar")` checks everywhere.

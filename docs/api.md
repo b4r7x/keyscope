@@ -1,5 +1,7 @@
 # API Reference
 
+> See the [interactive playground](../examples/playground/) for live demos of each hook.
+
 Complete reference for all public exports from `keyscope`. Requires React 19+.
 
 ---

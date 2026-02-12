@@ -31,7 +31,8 @@
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "prepublishOnly": "rm -rf dist && tsc"
+    "prepublishOnly": "rm -rf dist && tsc",
+    "playground": "pnpm --filter playground dev"
   },
   "peerDependencies": {
     "react": "^19.0.0"
