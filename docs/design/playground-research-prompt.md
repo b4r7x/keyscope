@@ -74,7 +74,7 @@ useZoneKeys(zone, "preview", { "Escape": backToContent });
 
 **4. List/menu navigation**
 ```tsx
-const { focusedValue } = useNavigation({
+const { highlighted } = useNavigation({
   containerRef: listRef,
   role: "option",
   onSelect: handleSelect,
@@ -150,7 +150,7 @@ The playground needs to showcase every hook in a compelling, interactive way. Ea
 | **Three-Panel Layout** | `useFocusZone`, `useZoneKeys` | Sidebar / Content / Preview. Arrow keys move between zones. Each zone has its own shortcuts. Classic IDE layout. |
 | **Tab Groups** | `useFocusZone` with `tabCycle` | Tab bar where Tab cycles between sections. Shows `tabCycle` option. |
 | **Command Palette** | `useKey`, `useScope`, `useNavigation` | `mod+K` opens palette, arrow keys navigate, Enter selects, Escape closes. Combines multiple hooks. |
-| **Selectable List** | `useNavigation` (scoped mode) | Arrow keys navigate items, Enter/Space selects. Shows `focusedValue`, `onSelect`. |
+| **Selectable List** | `useNavigation` (scoped mode) | Arrow keys navigate items, Enter/Space selects. Shows `highlighted`, `onSelect`. |
 | **Standalone Combobox** | `useNavigation` (local mode) | Same as above but using local mode with `onKeyDown`. Shows the two modes side by side. |
 | **Tab Bar** | `useTabNavigation` | Horizontal tabs with Left/Right navigation. Shows `useTabNavigation`. |
 | **Multi-Key Handler** | `useZoneKeys` with pipe syntax | `"Enter | Space"` fires same action. `keys(["1","2","3"], handler)` for number shortcuts. Shows pipe syntax + `keys()` helper. |

@@ -9,7 +9,9 @@ export { useScope } from "./hooks/use-scope.js";
 
 // Navigation hooks
 export { useNavigation } from "./hooks/use-navigation.js";
-export { useTabNavigation } from "./hooks/use-tab-navigation.js";
+export type { UseNavigationOptions, UseNavigationReturn } from "./hooks/use-navigation.js";
+export { useScopedNavigation } from "./hooks/use-scoped-navigation.js";
+export type { UseScopedNavigationOptions, UseScopedNavigationReturn } from "./hooks/use-scoped-navigation.js";
 export { useFocusZone } from "./hooks/use-focus-zone.js";
 
 // DOM hooks
@@ -24,4 +26,4 @@ export { keys } from "./utils/keys.js";
 export { useOptionalKeyboardContext } from "./context/keyboard-context.js";
 
 // Types
-export type { NavigationRole } from "./utils/types.js";
+export type { NavigationRole } from "./hooks/use-navigation.js";

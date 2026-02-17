@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useKey, useScope, useNavigation } from "keyscope";
+import { useKey, useScope, useScopedNavigation } from "keyscope";
 import { DemoWrapper } from "../components/demo-wrapper";
 
 const ALL_COMMANDS = [
@@ -47,7 +47,7 @@ export function CommandPaletteDemo() {
     setQuery("");
   }, { enabled: open });
 
-  const { focusedValue, isFocused } = useNavigation({
+  const { highlighted, isHighlighted } = useScopedNavigation({
     containerRef,
     role: "option",
     onEnter: (value) => selectCommand(value),
@@ -70,7 +70,7 @@ export function CommandPaletteDemo() {
   return (
     <DemoWrapper
       title="Command Palette"
-      description="A VS Code-style command palette combining useKey, useScope, and useNavigation. The palette opens in its own scope, isolating shortcuts from the rest of the app."
+      description="A VS Code-style command palette combining useKey, useScope, and useScopedNavigation. The palette opens in its own scope, isolating shortcuts from the rest of the app."
       activeScope={open ? "command-palette" : "global"}
       hints={[
         { keys: "mod+K", label: "Open palette" },
@@ -115,7 +115,7 @@ export function CommandPaletteDemo() {
                   key={cmd.id}
                   role="option"
                   data-value={cmd.id}
-                  className={`demo-list-item${isFocused(cmd.id) ? " demo-list-item--focused" : ""}`}
+                  className={`demo-list-item${isHighlighted(cmd.id) ? " demo-list-item--focused" : ""}`}
                   onClick={() => selectCommand(cmd.id)}
                 >
                   <span style={{ marginRight: 8 }}>{cmd.icon}</span>
