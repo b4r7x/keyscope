@@ -2,7 +2,7 @@
 
 > Try the [List Navigation](../../examples/playground/) and [Tab Bar](../../examples/playground/) demos to see navigation in action.
 
-Two hooks for keyboard-driven list and tab navigation. Both query the DOM for items inside a container, then move focus between them with arrow keys, Home, End, Enter, and Space.
+Two hooks for keyboard-driven navigation. `useNavigation` is standalone (no Provider needed) and `useScopedNavigation` integrates with `KeyboardProvider`. Both query the DOM for items inside a container, then move focus between them with arrow keys, Home, End, Enter, and Space.
 
 ## useNavigation
 
@@ -13,7 +13,7 @@ The main hook. Handles arrow key navigation, selection, and focus tracking for a
 Three things need to be true about your HTML:
 
 1. A **container element** with a ref
-2. Child elements with a matching **`role`** attribute (`"option"`, `"menuitem"`, `"radio"`, `"checkbox"`, or `"button"`)
+2. Child elements with a matching **`role`** attribute (`"option"`, `"menuitem"`, `"radio"`, `"checkbox"`, `"button"`, or `"tab"`)
 3. Each child has a **`data-value`** attribute -- this is how the hook tracks which item is focused
 
 Disabled items use `aria-disabled="true"` (not the HTML `disabled` attribute). When `skipDisabled` is true (the default), the selector becomes `[role="option"]:not([aria-disabled="true"])`, so disabled items get skipped during navigation.
@@ -21,22 +21,22 @@ Disabled items use `aria-disabled="true"` (not the HTML `disabled` attribute). W
 ```tsx
 const containerRef = useRef<HTMLDivElement>(null);
 
-const { focusedValue, isFocused } = useNavigation({
+const { highlighted, isHighlighted, onKeyDown } = useNavigation({
   containerRef,
   role: "option",
   onSelect: (value) => console.log("selected", value),
 });
 
 return (
-  <div ref={containerRef} role="listbox">
+  <div ref={containerRef} role="listbox" onKeyDown={onKeyDown}>
     {items.map((item) => (
       <div
         key={item.id}
         role="option"
         data-value={item.id}
         aria-disabled={item.disabled ? "true" : undefined}
-        aria-selected={isFocused(item.id)}
-        style={{ background: isFocused(item.id) ? "#e0e7ff" : undefined }}
+        aria-selected={isHighlighted(item.id)}
+        style={{ background: isHighlighted(item.id) ? "#e0e7ff" : undefined }}
       >
         {item.label}
       </div>
@@ -47,30 +47,15 @@ return (
 
 On every focus change, the hook calls `scrollIntoView({ block: "nearest" })` on the focused element, so long lists scroll to keep the focused item visible.
 
-### Scoped vs local mode
+### Standalone vs scoped
 
-`useNavigation` has two modes that change how key events are captured.
-
-**Scoped mode** (default) registers keys through keyscope's `KeyboardProvider` via `useKey`. Keys are active based on the current scope stack, and you can use `requireFocusWithin` to only handle keys when focus is inside the container.
+`useNavigation` is standalone — it returns an `onKeyDown` handler you attach to your container. No `KeyboardProvider` required.
 
 ```tsx
-// Scoped mode -- keys register globally (or scoped to the active scope)
-const { focusedValue, isFocused, focus } = useNavigation({
+// Standalone — you wire up the handler
+const { highlighted, isHighlighted, highlight, onKeyDown } = useNavigation({
   containerRef,
   role: "option",
-  // mode: "scoped" is the default
-  requireFocusWithin: true, // only respond when focus is inside container
-});
-```
-
-**Local mode** returns an `onKeyDown` handler that you attach to the container yourself. Useful when you don't want keyscope's scope system involved -- for example in a combobox dropdown where the input's `onKeyDown` should drive navigation.
-
-```tsx
-// Local mode -- you wire up the handler
-const { focusedValue, isFocused, focus, onKeyDown } = useNavigation({
-  containerRef,
-  role: "option",
-  mode: "local",
 });
 
 return (
@@ -80,28 +65,41 @@ return (
 );
 ```
 
-When to use which:
-- **Scoped**: the list is the main content of a panel, dialog, or page. You want arrow keys to work without the user clicking into the list first.
-- **Local**: the list is embedded inside a larger component (combobox, dropdown). You only want navigation when the container has focus.
-
-### Controlled vs uncontrolled
-
-**Uncontrolled** (default): pass `initialValue` and the hook manages focus state internally. `focusedValue` reflects the internal state.
+For scope-aware navigation (e.g., modals, panels), use `useScopedNavigation` instead. It registers keys through `KeyboardProvider` via `useKey`, so they participate in the scope stack.
 
 ```tsx
-const { focusedValue } = useNavigation({
+import { useScopedNavigation } from "keyscope";
+
+// Scoped — keys register through KeyboardProvider
+const { highlighted, isHighlighted, highlight } = useScopedNavigation({
   containerRef,
   role: "option",
-  initialValue: "first-item", // starts focused here (null if omitted)
+  requireFocusWithin: true, // only respond when focus is inside container
 });
 ```
 
-**Controlled**: pass `value` and `onValueChange`. The hook calls `onValueChange` instead of updating internal state -- you own the focus value.
+When to use which:
+- **useNavigation**: the list is embedded inside a component (combobox, dropdown, tab bar). You attach `onKeyDown` to the container.
+- **useScopedNavigation**: the list is the main content of a panel, dialog, or page. You want arrow keys to work without the user clicking into the list first, and you need scope awareness.
+
+### Controlled vs uncontrolled
+
+**Uncontrolled** (default): pass `initialValue` and the hook manages highlight state internally. `highlighted` reflects the internal state.
+
+```tsx
+const { highlighted } = useNavigation({
+  containerRef,
+  role: "option",
+  initialValue: "first-item", // starts highlighted here (null if omitted)
+});
+```
+
+**Controlled**: pass `value` and `onValueChange`. The hook calls `onValueChange` instead of updating internal state -- you own the highlighted value.
 
 ```tsx
 const [focused, setFocused] = useState<string | null>("first-item");
 
-const { isFocused } = useNavigation({
+const { isHighlighted } = useNavigation({
   containerRef,
   role: "option",
   value: focused,
@@ -178,30 +176,30 @@ This is useful for multi-section layouts where hitting the bottom of one list sh
 
 Three ways to observe focus:
 
-- `focusedValue` -- the current focused item's `data-value`, or `null`
-- `isFocused(value)` -- returns `true` if that value is currently focused
-- `onFocusChange(value)` -- callback fired on every focus change
+- `highlighted` -- the current highlighted item's `data-value`, or `null`
+- `isHighlighted(value)` -- returns `true` if that value is currently highlighted
+- `onHighlightChange(value)` -- callback fired on every focus change
 
-The `focus(value)` function lets you programmatically set focus:
+The `highlight(value)` function lets you programmatically set the highlighted item:
 
 ```tsx
-const { focus } = useNavigation({ containerRef, role: "option" });
+const { highlight } = useNavigation({ containerRef, role: "option" });
 
 // Jump to a specific item
-focus("item-42");
+highlight("item-42");
 ```
 
 ### Full options reference
 
 ```ts
-interface UseNavigationBaseOptions {
+interface UseNavigationOptions {
   containerRef: RefObject<HTMLElement | null>;  // required
   role: NavigationRole;                         // required
   value?: string | null;
   onValueChange?: (value: string) => void;
   onSelect?: (value: string, event: KeyboardEvent) => void;
   onEnter?: (value: string, event: KeyboardEvent) => void;
-  onFocusChange?: (value: string) => void;
+  onHighlightChange?: (value: string) => void;
   wrap?: boolean;                   // default: true
   enabled?: boolean;                // default: true
   preventDefault?: boolean;         // default: true
@@ -213,64 +211,55 @@ interface UseNavigationBaseOptions {
   downKeys?: string[];              // default: ["ArrowDown"] or ["ArrowRight"]
 }
 
-// Scoped mode adds:
-requireFocusWithin?: boolean;       // default: false
-
-// Local mode adds:
-mode: "local";
-// Returns onKeyDown in the result
+// useScopedNavigation extends the same options:
+interface UseScopedNavigationOptions extends UseNavigationOptions {
+  requireFocusWithin?: boolean;     // default: false
+}
 ```
 
 ---
 
-## useTabNavigation
+## Tab navigation
 
-A simpler hook for tab bar navigation. Always local mode (returns `onKeyDown`), always auto-activates tabs.
-
-### How it differs from useNavigation
-
-| | useNavigation | useTabNavigation |
-|---|---|---|
-| Modes | Scoped or local | Local only |
-| Focus tracking | `data-value` + internal state | DOM `activeElement` |
-| Selection | Separate focus + select | Auto-activates (focus + click) |
-| Disabled check | `aria-disabled="true"` | HTML `disabled` attribute |
-| Item selector | `[role="${role}"]` | `[role="tab"]` |
-
-The key difference: `useTabNavigation` calls `.focus()` then `.click()` on the target tab. This means moving to a tab immediately activates it -- there's no separate "focused but not selected" state. This matches the WAI-ARIA tabs pattern with automatic activation.
+The old `useTabNavigation` hook has been replaced by `useNavigation` with `role: "tab"`. This provides consistent behavior with other navigation roles.
 
 ### DOM setup
 
-The container needs `role="tablist"`. Tab buttons need `role="tab"`. Disabled tabs use the HTML `disabled` attribute (not `aria-disabled`).
+The container needs `role="tablist"`. Tab buttons need `role="tab"` and `data-value` attributes. Disabled tabs use `aria-disabled="true"`.
 
 ```tsx
 const containerRef = useRef<HTMLDivElement>(null);
-const { onKeyDown } = useTabNavigation({ containerRef });
+const { onKeyDown } = useNavigation({
+  containerRef,
+  role: "tab",
+  orientation: "horizontal",
+});
 
 return (
   <div ref={containerRef} role="tablist" onKeyDown={onKeyDown}>
-    <button role="tab" onClick={() => setTab("one")}>
+    <button role="tab" data-value="one" onClick={() => setTab("one")}>
       Tab One
     </button>
-    <button role="tab" onClick={() => setTab("two")}>
+    <button role="tab" data-value="two" onClick={() => setTab("two")}>
       Tab Two
     </button>
-    <button role="tab" disabled onClick={() => setTab("three")}>
+    <button role="tab" data-value="three" aria-disabled="true">
       Tab Three
     </button>
   </div>
 );
 ```
 
-Arrow keys move between tabs. Home jumps to the first tab, End to the last. Wrapping is on by default. The hook always calls `event.preventDefault()` on handled keys.
+Arrow keys move between tabs. Home jumps to the first tab, End to the last. Wrapping is on by default.
 
 ### Vertical tabs
 
 Pass `orientation: "vertical"` to switch from ArrowLeft/ArrowRight to ArrowUp/ArrowDown.
 
 ```tsx
-const { onKeyDown } = useTabNavigation({
+const { onKeyDown } = useNavigation({
   containerRef,
+  role: "tab",
   orientation: "vertical",
 });
 ```
@@ -281,7 +270,12 @@ const { onKeyDown } = useTabNavigation({
 function Tabs() {
   const [active, setActive] = useState("overview");
   const containerRef = useRef<HTMLDivElement>(null);
-  const { onKeyDown } = useTabNavigation({ containerRef });
+  const { isHighlighted, onKeyDown } = useNavigation({
+    containerRef,
+    role: "tab",
+    orientation: "horizontal",
+    onSelect: (value) => setActive(value),
+  });
 
   const tabs = [
     { id: "overview", label: "Overview" },
@@ -297,10 +291,11 @@ function Tabs() {
           <button
             key={tab.id}
             role="tab"
-            disabled={tab.disabled}
+            data-value={tab.id}
+            aria-disabled={tab.disabled ? "true" : undefined}
             aria-selected={active === tab.id}
             tabIndex={active === tab.id ? 0 : -1}
-            onClick={() => setActive(tab.id)}
+            onClick={() => !tab.disabled && setActive(tab.id)}
           >
             {tab.label}
           </button>
@@ -317,4 +312,4 @@ function Tabs() {
 }
 ```
 
-Focus a tab with your mouse or Tab key, then use Left/Right arrows to move between tabs. The billing tab is skipped because it's disabled. Home/End jump to the first and last enabled tabs.
+Focus a tab with your mouse or Tab key, then use Left/Right arrows to move between tabs. The billing tab is skipped because it has `aria-disabled="true"`. Home/End jump to the first and last enabled tabs.

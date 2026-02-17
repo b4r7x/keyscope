@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { useTabNavigation } from "keyscope";
+import { useNavigation } from "keyscope";
 import { DemoWrapper } from "../components/demo-wrapper";
 
 const horizontalTabs = [
@@ -22,13 +22,22 @@ export function TabBarDemo() {
   const hTabListRef = useRef<HTMLDivElement>(null);
   const vTabListRef = useRef<HTMLDivElement>(null);
 
-  const { onKeyDown: hOnKeyDown } = useTabNavigation({
+  const { onKeyDown: hOnKeyDown } = useNavigation({
     containerRef: hTabListRef,
+    role: "tab",
+    orientation: "horizontal",
+    value: activeHTab,
+    onValueChange: setActiveHTab,
+    onSelect: setActiveHTab,
   });
 
-  const { onKeyDown: vOnKeyDown } = useTabNavigation({
+  const { onKeyDown: vOnKeyDown } = useNavigation({
     containerRef: vTabListRef,
+    role: "tab",
     orientation: "vertical",
+    value: activeVTab,
+    onValueChange: setActiveVTab,
+    onSelect: setActiveVTab,
   });
 
   const activeHContent = horizontalTabs.find((t) => t.id === activeHTab)?.content;
@@ -37,7 +46,7 @@ export function TabBarDemo() {
   return (
     <DemoWrapper
       title="Tab Bar"
-      description="Navigate between tabs using arrow keys. The horizontal tab bar uses Left/Right arrows while the vertical tab bar uses Up/Down. Uses useTabNavigation which auto-focuses and clicks the target tab."
+      description="Navigate between tabs using arrow keys. The horizontal tab bar uses Left/Right arrows while the vertical tab bar uses Up/Down. Uses useNavigation with role='tab'."
       hints={[
         { keys: "ArrowLeft", label: "Previous tab (horizontal)" },
         { keys: "ArrowRight", label: "Next tab (horizontal)" },
@@ -58,6 +67,7 @@ export function TabBarDemo() {
             <button
               key={tab.id}
               role="tab"
+              data-value={tab.id}
               onClick={() => setActiveHTab(tab.id)}
               aria-selected={activeHTab === tab.id}
               tabIndex={activeHTab === tab.id ? 0 : -1}
@@ -91,6 +101,7 @@ export function TabBarDemo() {
               <button
                 key={tab.id}
                 role="tab"
+                data-value={tab.id}
                 onClick={() => setActiveVTab(tab.id)}
                 aria-selected={activeVTab === tab.id}
                 tabIndex={activeVTab === tab.id ? 0 : -1}

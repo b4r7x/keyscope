@@ -207,7 +207,7 @@ The sidebar lists all demos. Clicking one sets the active demo. The main content
 
 #### Demo 6: Selectable List
 - **Hooks**: `useNavigation` (scoped mode)
-- **What it shows**: Arrow keys navigate a list. Enter/Space selects. Home/End jump to first/last. Shows `focusedValue` tracking.
+- **What it shows**: Arrow keys navigate a list. Enter/Space selects. Home/End jump to first/last. Shows `highlighted` tracking.
 - **Visual**: Vertical list of items. Focused item has a distinct background. Selected items have a checkmark. Focused value displayed below the list.
 - **What to try**: "Use `↑` `↓` to navigate. `Enter` to select. `Home`/`End` to jump."
 

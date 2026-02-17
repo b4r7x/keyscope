@@ -51,7 +51,7 @@ Demos include:
 - **Scoped Dialog** — `useScope` push/pop
 - **Focus Zones** — `useFocusZone` with zone-specific bindings
 - **List Navigation** — `useNavigation` with ARIA roles
-- **Tab Bar** — `useTabNavigation` for tab lists
+- **Tab Bar** — `useNavigation` with `role: "tab"` for tab lists
 - **Command Palette** — composition of `useKey` + `useScope` + `useNavigation`
 - **Focus Trap** — `useFocusTrap` + `useScrollLock` in a modal
 
@@ -87,7 +87,7 @@ Wrap your app with `KeyboardProvider`. Use `useKey` anywhere inside. That's it.
 - [API Reference](docs/api.md) — every hook, every option, every default
 - **Guides**
   - [Scopes](docs/guides/scopes.md) — scope stack, layering, common mistakes
-  - [List navigation](docs/guides/navigation.md) — useNavigation, useTabNavigation, DOM setup
+  - [List navigation](docs/guides/navigation.md) — useNavigation, useScopedNavigation, DOM setup
   - [Focus zones](docs/guides/focus-zones.md) — zones, forZone, transitions
   - [Focus & scroll](docs/guides/focus-and-scroll.md) — useFocusTrap, useScrollLock
 
@@ -201,33 +201,35 @@ interface UseFocusZoneReturn<T extends string> {
 
 ### useNavigation
 
-Full list navigation — arrow keys, Home/End, selection, focus tracking. Queries `[role][data-value]` elements from the DOM.
+Full list navigation — arrow keys, Home/End, selection, focus tracking. Queries `[role][data-value]` elements from the DOM. Standalone — no `KeyboardProvider` required.
 
 ```tsx
 const containerRef = useRef<HTMLDivElement>(null);
 
-const { focusedValue, isFocused } = useNavigation({
+const { focusedValue, isFocused, onKeyDown } = useNavigation({
   containerRef,
   role: "option",
   onSelect: (value) => toggleItem(value),
   onEnter: (value) => openItem(value),
   wrap: true,
 });
+
+return <div ref={containerRef} onKeyDown={onKeyDown}>...</div>;
 ```
 
 `onSelect` fires on **Space** (ARIA selection), `onEnter` fires on **Enter** (ARIA activation). If `onEnter` is not provided, Enter falls back to `onSelect`.
 
-**Local mode** returns an `onKeyDown` handler you attach yourself, useful for components that manage their own events:
+For scope-aware navigation that participates in keyscope's scope stack, use `useScopedNavigation`:
 
 ```tsx
-const { onKeyDown } = useNavigation({
-  containerRef,
-  role: "menuitem",
-  mode: "local",
-  onSelect: (value) => activate(value),
-});
+import { useScopedNavigation } from "keyscope";
 
-return <div ref={containerRef} onKeyDown={onKeyDown}>...</div>;
+const { focusedValue, isFocused } = useScopedNavigation({
+  containerRef,
+  role: "option",
+  onSelect: (value) => activate(value),
+  requireFocusWithin: true,
+});
 ```
 
 <details>
@@ -236,13 +238,13 @@ return <div ref={containerRef} onKeyDown={onKeyDown}>...</div>;
 ```ts
 interface UseNavigationBaseOptions {
   containerRef: RefObject<HTMLElement | null>;
-  role: NavigationRole;                        // "radio" | "checkbox" | "option" | "menuitem"
+  role: NavigationRole;                        // "radio" | "checkbox" | "option" | "menuitem" | "button" | "tab"
   value?: string | null;                       // controlled focused value
   onValueChange?: (value: string) => void;
   onSelect?: (value: string, event: KeyboardEvent) => void;
   onEnter?: (value: string, event: KeyboardEvent) => void;
   preventDefault?: boolean;                    // default: true
-  onFocusChange?: (value: string) => void;
+  onHighlightChange?: (value: string) => void;
   wrap?: boolean;                              // default: true
   enabled?: boolean;                           // default: true
   onBoundaryReached?: (direction: "up" | "down") => void;
@@ -253,39 +255,38 @@ interface UseNavigationBaseOptions {
   downKeys?: string[];
 }
 
-// Scoped mode (default)
-interface UseScopedNavigationOptions extends UseNavigationBaseOptions {
-  mode?: "scoped";
-  requireFocusWithin?: boolean;
-}
-
-// Local mode
-interface UseLocalNavigationOptions extends UseNavigationBaseOptions {
-  mode: "local";
-}
-
 interface UseNavigationReturn {
   focusedValue: string | null;
   isFocused: (value: string) => boolean;
   focus: (value: string) => void;
-  onKeyDown?: (event: KeyboardEvent) => void;  // only in local mode
+  onKeyDown: (event: KeyboardEvent) => void;
 }
+
+// useScopedNavigation adds:
+interface UseScopedNavigationOptions extends UseNavigationOptions {
+  requireFocusWithin?: boolean;
+}
+// Returns { focusedValue, isFocused, focus } (no onKeyDown)
 ```
 
 </details>
 
-### useTabNavigation
+### Tab navigation
 
-Arrow keys and Home/End for tab lists. Queries `[role="tab"]:not([disabled])` inside the container.
+Use `useNavigation` with `role: "tab"` for tab list navigation. Queries `[role="tab"]` elements with `data-value` attributes.
 
 ```tsx
 const tabListRef = useRef<HTMLDivElement>(null);
-const { onKeyDown } = useTabNavigation({ containerRef: tabListRef });
+const { onKeyDown } = useNavigation({
+  containerRef: tabListRef,
+  role: "tab",
+  orientation: "horizontal",
+});
 
 return (
   <div ref={tabListRef} role="tablist" onKeyDown={onKeyDown}>
-    <button role="tab">Tab 1</button>
-    <button role="tab">Tab 2</button>
+    <button role="tab" data-value="tab1">Tab 1</button>
+    <button role="tab" data-value="tab2">Tab 2</button>
   </div>
 );
 ```

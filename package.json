@@ -20,18 +20,20 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "registry"
   ],
   "bugs": {
     "url": "https://github.com/b4r7x/keyscope/issues"
   },
   "scripts": {
-    "build": "rm -rf dist && tsc",
+    "prebuild": "tsx scripts/bundle-registry.ts",
+    "build": "rm -rf dist && tsc && tsx scripts/copy-generated.ts",
     "dev": "tsc --watch",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "prepublishOnly": "rm -rf dist && tsc",
+    "prepublishOnly": "pnpm run build && test -f dist/cli/generated/registry-bundle.json",
     "playground": "pnpm --filter playground dev"
   },
   "peerDependencies": {
@@ -39,13 +41,16 @@
   },
   "devDependencies": {
     "@testing-library/react": "^16.0.0",
+    "@types/diff": "^8.0.0",
     "@types/node": "^25.2.3",
     "@types/react": "^19.0.0",
     "jsdom": "^28.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "tsx": "^4.0.0",
     "typescript": "^5.9.3",
-    "vitest": "^3.0.0"
+    "vitest": "^3.0.0",
+    "zod": "^4.3.6"
   },
   "keywords": [
     "react",
@@ -61,5 +66,12 @@
   ],
   "publishConfig": {
     "access": "public"
+  },
+  "bin": {
+    "keyscope": "./dist/cli/index.js"
+  },
+  "dependencies": {
+    "@b4r7/cli-core": "link:/home/b4r7/Projects/cli-core",
+    "diff": "^8.0.3"
   }
 }

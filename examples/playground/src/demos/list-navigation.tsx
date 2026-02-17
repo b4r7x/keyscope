@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { useNavigation } from "keyscope";
+import { useScopedNavigation } from "keyscope";
 import { DemoWrapper } from "../components/demo-wrapper";
 
 const fruits = [
@@ -35,7 +35,7 @@ export function ListNavigationDemo() {
     setTimeout(() => setActivatedItem(null), 1500);
   };
 
-  const { focusedValue, isFocused } = useNavigation({
+  const { highlighted, isHighlighted } = useScopedNavigation({
     containerRef,
     role: "option",
     onSelect: (value) => toggleSelection(value),
@@ -47,7 +47,7 @@ export function ListNavigationDemo() {
   return (
     <DemoWrapper
       title="List Navigation"
-      description="Navigate a list with arrow keys, toggle selection with Space, and activate items with Enter. Uses useNavigation in scoped mode — keyboard events are captured globally while the hook is active."
+      description="Navigate a list with arrow keys, toggle selection with Space, and activate items with Enter. Uses useScopedNavigation — keyboard events are captured globally via KeyboardProvider."
       hints={[
         { keys: "ArrowUp", label: "Move up" },
         { keys: "ArrowDown", label: "Move down" },
@@ -61,7 +61,7 @@ export function ListNavigationDemo() {
         <div className="demo-list">
           {fruits.map((fruit) => {
             const value = fruit.toLowerCase();
-            const focused = isFocused(value);
+            const focused = isHighlighted(value);
             const selected = selectedItems.has(value);
             return (
               <div
@@ -84,7 +84,7 @@ export function ListNavigationDemo() {
       </div>
 
       <div className="demo-status">
-        Focused: {focusedValue ?? "none"} | Selected: {selectedItems.size} items
+        Focused: {highlighted ?? "none"} | Selected: {selectedItems.size} items
       </div>
 
       {activatedItem && (
