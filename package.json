@@ -71,7 +71,7 @@
     "keyscope": "./dist/cli/index.js"
   },
   "dependencies": {
-    "@b4r7/cli-core": "link:/home/b4r7/Projects/cli-core",
+    "@b4r7/cli-core": "workspace:*",
     "diff": "^8.0.3"
   }
 }
