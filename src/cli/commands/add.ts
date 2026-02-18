@@ -21,7 +21,7 @@ import {
   formatWriteSummary,
   installDepsWithRollback,
 } from "@b4r7/cli-core";
-import { VERSION } from "../version.js";
+import { VERSION } from "../constants.js";
 
 type AddMode = "copy" | "package";
 

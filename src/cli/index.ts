@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { createCli, runCli } from "@b4r7/cli-core";
-import { VERSION } from "./version.js";
+import { VERSION } from "./constants.js";
 import { initCommand } from "./commands/init.js";
 import { addCommand } from "./commands/add.js";
 import { listCommand } from "./commands/list.js";
