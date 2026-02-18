@@ -9,7 +9,7 @@ importers:
   .:
     dependencies:
       '@b4r7/cli-core':
-        specifier: link:/home/b4r7/Projects/cli-core
+        specifier: workspace:*
         version: link:../cli-core
       diff:
         specifier: ^8.0.3
