@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { Command, pc, detectPackageManager, detectSourceDir, ensureWithinDir, info, success, warn, heading, fileAction, promptConfirm, withErrorHandler } from "@b4r7/cli-core";
 import { writeConfig, loadConfig } from "../utils/config.js";
 import { CONFIG_FILE } from "../constants.js";
-import { VERSION } from "../version.js";
+import { VERSION } from "../constants.js";
 
 export const initCommand = new Command("init")
   .description("Initialize keyscope hooks CLI in your project")
