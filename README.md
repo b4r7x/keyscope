@@ -35,6 +35,36 @@ npm install keyscope
 
 Requires React 19+ as a peer dependency.
 
+### Install standalone hooks via shadcn
+
+If you only need the three standalone hooks (`useNavigation`, `useFocusTrap`, `useScrollLock`) and don't want the full keyscope package, you can install them directly into your project via the shadcn CLI:
+
+**1. Add the keyscope registry namespace to `components.json`:**
+
+```jsonc
+{
+  "registries": {
+    "@keyscope": { "url": "https://diffui.dev/r/keyscope" }
+  }
+}
+```
+
+**2. Install hooks:**
+
+```bash
+npx shadcn@latest add @keyscope/navigation
+npx shadcn@latest add @keyscope/focus-trap
+npx shadcn@latest add @keyscope/scroll-lock
+```
+
+This copies hook source files into your `hooks/` directory. No keyscope dependency, zero external deps.
+
+Or via the keyscope CLI:
+
+```bash
+npx keyscope add navigation focus-trap scroll-lock
+```
+
 ## Examples
 
 Interactive playground with live demos of every hook:
