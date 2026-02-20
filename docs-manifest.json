@@ -1,0 +1,15 @@
+{
+  "library": "keyscope",
+  "package": "keyscope",
+  "version": "0.1.1",
+  "registry": {
+    "namespace": "@keyscope",
+    "basePath": "/r/keyscope",
+    "directory": "public/r",
+    "index": "public/r/registry.json"
+  },
+  "docs": {
+    "directory": "docs",
+    "entry": "docs/api.md"
+  }
+}
