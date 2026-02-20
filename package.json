@@ -22,7 +22,9 @@
   "files": [
     "dist",
     "registry",
-    "public/r"
+    "public/r",
+    "docs",
+    "docs-manifest.json"
   ],
   "bugs": {
     "url": "https://github.com/b4r7x/keyscope/issues"
