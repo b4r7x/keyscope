@@ -8,6 +8,7 @@ import {
   collectNpmDeps as coreCollectNpmDeps,
   getRelativePath as coreGetRelativePath,
   createRegistryLoader,
+  metaField,
 } from "@b4r7/cli-core";
 import { ITEM_LABEL } from "../constants.js";
 
@@ -43,7 +44,7 @@ export function getRegistryItem(name: string): RegistryItem | undefined {
 }
 
 export function getPublicHooks(): RegistryItem[] {
-  return getRegistry().items.filter((item) => item.type === "registry:hook" && !item.hidden);
+  return getRegistry().items.filter((item) => item.type === "registry:hook" && !metaField(item, "hidden", false));
 }
 
 export function getAllHooks(): RegistryItem[] {

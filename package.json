@@ -21,7 +21,8 @@
   },
   "files": [
     "dist",
-    "registry"
+    "registry",
+    "public/r"
   ],
   "bugs": {
     "url": "https://github.com/b4r7x/keyscope/issues"
@@ -29,11 +30,12 @@
   "scripts": {
     "prebuild": "tsx scripts/bundle-registry.ts",
     "build": "rm -rf dist && tsc && tsx scripts/copy-generated.ts",
+    "build:shadcn": "npx shadcn@latest build registry/registry.json --output public/r",
     "dev": "tsc --watch",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "prepublishOnly": "pnpm run build && test -f dist/cli/generated/registry-bundle.json",
+    "prepublishOnly": "pnpm run build && pnpm run build:shadcn && test -f dist/cli/generated/registry-bundle.json",
     "playground": "pnpm --filter playground dev"
   },
   "peerDependencies": {
@@ -47,6 +49,7 @@
     "jsdom": "^28.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "shadcn": "^2.5.0",
     "tsx": "^4.0.0",
     "typescript": "^5.9.3",
     "vitest": "^3.0.0",
