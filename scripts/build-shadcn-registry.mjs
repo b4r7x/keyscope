@@ -24,6 +24,7 @@ function resolveLocalShadcnBin() {
 function main() {
   const localBin = resolveLocalShadcnBin();
   const args = ["build", "registry/registry.json", "--output", "public/r"];
+  const networkVersion = (process.env.SHADCN_CLI_VERSION ?? "latest").trim() || "latest";
 
   if (localBin) {
     run(localBin, args);
@@ -31,7 +32,7 @@ function main() {
   }
 
   if (process.env.ALLOW_NETWORK_SHADCN === "1") {
-    run("npx", ["shadcn@2.10.0", ...args]);
+    run("npx", [`shadcn@${networkVersion}`, ...args]);
     return;
   }
 
@@ -40,6 +41,7 @@ function main() {
       "Local shadcn CLI binary not found.",
       "Install dependencies so node_modules/.bin/shadcn exists,",
       "or opt in to network fallback with ALLOW_NETWORK_SHADCN=1.",
+      "Optional: set SHADCN_CLI_VERSION (default: latest).",
     ].join("\n"),
   );
 }

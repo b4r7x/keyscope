@@ -10,10 +10,6 @@ const bundle = createBundler({
   outputPath: resolve(ROOT, "src/cli/generated/registry-bundle.json"),
   clientDefault: true,
   itemLabel: "hook",
-  transformPath: (path) =>
-    path.startsWith("src/hooks/")
-      ? path.replace(/^src\/hooks\//, "registry/hooks/")
-      : path,
 });
 
 bundle();

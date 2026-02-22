@@ -31,7 +31,7 @@ export type RegistryFile = z.infer<typeof RegistryFileSchema>;
 export type RegistryItem = z.infer<typeof RegistryItemSchema>;
 export type RegistryBundle = z.infer<typeof RegistryBundleSchema>;
 
-const REGISTRY_HOOKS_PREFIX = "registry/hooks/";
+const REGISTRY_HOOKS_PREFIXES = ["registry/hooks/", "src/hooks/"] as const;
 
 const getRegistry = createRegistryLoader(
   resolve(__dirname, "../generated/registry-bundle.json"),
@@ -56,7 +56,7 @@ export function resolveRegistryDeps(names: string[]): string[] {
 }
 
 export function getRelativePath(file: { path: string }): string {
-  return coreGetRelativePath(file, [REGISTRY_HOOKS_PREFIX]);
+  return coreGetRelativePath(file, [...REGISTRY_HOOKS_PREFIXES]);
 }
 
 export function collectNpmDeps(names: string[]): string[] {
