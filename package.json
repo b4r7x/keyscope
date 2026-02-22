@@ -24,7 +24,6 @@
     "registry",
     "public/r",
     "docs",
-    "docs-manifest.json",
     "internal-docs-manifest.json"
   ],
   "bugs": {
@@ -33,13 +32,13 @@
   "scripts": {
     "prebuild": "node --import tsx scripts/bundle-registry.ts",
     "build": "rm -rf dist && tsc && node --import tsx scripts/copy-generated.ts",
-    "build:shadcn": "node scripts/build-shadcn-registry.mjs && node scripts/rewrite-registry-origin.mjs public/r",
+    "build:shadcn": "node scripts/build-shadcn-registry.mjs",
     "build:artifacts": "node scripts/build-publish-artifacts.mjs",
-    "build:publish-artifacts": "pnpm build:artifacts",
     "dev": "tsc --watch",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "verify:registry-cleanup": "node ../docs/scripts/verify-registry-cleanup.mjs --scope keyscope",
     "prepublishOnly": "pnpm run build && pnpm run build:shadcn && test -f dist/cli/generated/registry-bundle.json",
     "playground": "pnpm --filter playground dev"
   },

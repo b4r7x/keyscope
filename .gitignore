@@ -1,5 +1,6 @@
 node_modules/
 dist/
+public/r/
 *.tsbuildinfo
 .DS_Store
 examples/playground/dist/
