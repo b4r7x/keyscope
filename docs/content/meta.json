@@ -1,0 +1,14 @@
+{
+  "title": "Keyscope",
+  "root": true,
+  "pages": [
+    "---Getting Started---",
+    "...getting-started",
+    "---API---",
+    "...api",
+    "---Guides---",
+    "...guides",
+    "---CLI---",
+    "...cli"
+  ]
+}

@@ -1,0 +1,21 @@
+---
+title: remove
+description: Remove hooks and clean related manifest entries.
+---
+
+```bash
+npx keyscope remove navigation
+npx keyscope remove focus-trap scroll-lock
+```
+
+## Useful flags
+
+- `--dry-run`: preview removals only
+- `-y, --yes`: skip confirmation prompt
+- `--cwd <path>`: run in another project root
+
+## Behavior
+
+- Removes only files owned by selected hooks.
+- Keeps shared files required by remaining installed hooks.
+- Shows potential orphaned npm dependencies.

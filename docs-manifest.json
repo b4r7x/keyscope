@@ -9,7 +9,7 @@
     "index": "public/r/registry.json"
   },
   "docs": {
-    "directory": "docs",
-    "entry": "docs/api.md"
+    "directory": "docs/content",
+    "entry": "docs/content/getting-started/installation.mdx"
   }
 }

@@ -1,0 +1,15 @@
+---
+title: diff
+description: Compare local hook files with upstream registry versions.
+---
+
+```bash
+npx keyscope diff
+npx keyscope diff navigation focus-trap
+```
+
+## Behavior
+
+- If no hooks are passed, diffs all installed public hooks.
+- Prints unified patches for files that differ.
+- Marks missing files as `not installed`.

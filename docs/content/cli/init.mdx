@@ -1,0 +1,21 @@
+---
+title: init
+description: Initialize keyscope CLI config in your project.
+---
+
+```bash
+npx keyscope init
+```
+
+## What it does
+
+- Detects package manager and source directory
+- Creates `keyscope.json`
+- Creates the hooks directory (default `src/hooks`)
+
+## Useful flags
+
+- `--cwd <path>`: run in another project root
+- `--hooks-dir <path>`: override hooks install directory
+- `--force`: reinitialize existing config
+- `-y, --yes`: skip interactive confirmation

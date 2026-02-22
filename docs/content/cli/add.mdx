@@ -1,0 +1,23 @@
+---
+title: add
+description: Install keyscope hooks into your project.
+---
+
+```bash
+npx keyscope add navigation
+npx keyscope add focus-trap scroll-lock
+```
+
+## Useful flags
+
+- `--all`: add all public hooks
+- `--mode <copy|package>`: choose integration mode
+- `--keyscope-version <version>`: pin package version in `package` mode
+- `--overwrite`: overwrite existing files
+- `--dry-run`: preview changes only
+- `-y, --yes`: skip confirmation prompts
+
+## Notes
+
+- `copy` mode keeps hooks local and editable.
+- `package` mode keeps local hook files but also installs `keyscope` runtime dependency.

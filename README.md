@@ -44,10 +44,12 @@ If you only need the three standalone hooks (`useNavigation`, `useFocusTrap`, `u
 ```jsonc
 {
   "registries": {
-    "@keyscope": { "url": "https://diffui.dev/r/keyscope" }
+    "@keyscope": { "url": "https://<your-diffgazer-domain>/r/keyscope/{name}.json" }
   }
 }
 ```
+
+Replace `<your-diffgazer-domain>` with the domain that serves your registry/docs.
 
 **2. Install hooks:**
 

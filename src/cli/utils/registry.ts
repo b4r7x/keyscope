@@ -8,11 +8,15 @@ import {
   collectNpmDeps as coreCollectNpmDeps,
   getRelativePath as coreGetRelativePath,
   createRegistryLoader,
-  metaField,
 } from "@b4r7/cli-core";
 import { ITEM_LABEL } from "../constants.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+function metaField<T>(item: unknown, key: string, fallback: T): T {
+  const value = (item as { meta?: Record<string, unknown> } | undefined)?.meta?.[key];
+  return value !== undefined ? (value as T) : fallback;
+}
 
 const RegistryFileSchema = CoreRegistryFileSchema.extend({
   content: z.string(),

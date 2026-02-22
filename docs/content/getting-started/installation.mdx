@@ -1,0 +1,63 @@
+---
+title: Installation
+description: Install keyscope hooks with the keyscope CLI or via shadcn registry namespaces.
+---
+
+keyscope is a hooks-first keyboard accessibility toolkit for React.
+
+## Option A: keyscope CLI
+
+Initialize once in your app:
+
+```bash
+npx keyscope init
+```
+
+Install hooks as local source files:
+
+```bash
+npx keyscope add navigation
+npx keyscope add focus-trap
+npx keyscope add scroll-lock
+```
+
+By default, the hooks are copied into your `@/hooks` directory and stay fully editable.
+
+## Option B: shadcn Registry
+
+Add the keyscope namespace to your `components.json`:
+
+```json
+{
+  "registries": {
+    "@keyscope": {
+      "url": "https://<your-diffgazer-domain>/r/keyscope/{name}.json"
+    }
+  }
+}
+```
+
+Install hooks with shadcn:
+
+```bash
+npx shadcn@latest add @keyscope/navigation
+npx shadcn@latest add @keyscope/focus-trap
+npx shadcn@latest add @keyscope/scroll-lock
+```
+
+## Integrating with diff-ui
+
+When your `components.json` also includes `@diffui`, keyboard-enabled diff-ui components can install keyscope hooks automatically through `registryDependencies`.
+
+```json
+{
+  "registries": {
+    "@diffui": {
+      "url": "https://<your-diffgazer-domain>/r/diff-ui/{name}.json"
+    },
+    "@keyscope": {
+      "url": "https://<your-diffgazer-domain>/r/keyscope/{name}.json"
+    }
+  }
+}
+```

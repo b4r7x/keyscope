@@ -2,7 +2,6 @@ import { useEffectEvent } from "react";
 import {
   useNavigationCore,
   type UseNavigationOptions,
-  type NavigationRole,
 } from "./use-navigation.js";
 import { useKey } from "./use-key.js";
 import { keys } from "../utils/keys.js";
