@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-const DEFAULT_ORIGIN = "https://diffui.dev";
+const DEFAULT_ORIGIN = "https://diffgazer.com";
 
 function normalizeOrigin(raw) {
   const value = (raw ?? DEFAULT_ORIGIN).trim();

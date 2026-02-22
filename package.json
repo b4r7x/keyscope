@@ -31,9 +31,10 @@
     "url": "https://github.com/b4r7x/keyscope/issues"
   },
   "scripts": {
-    "prebuild": "tsx scripts/bundle-registry.ts",
-    "build": "rm -rf dist && tsc && tsx scripts/copy-generated.ts",
-    "build:shadcn": "npx shadcn@2.10.0 build registry/registry.json --output public/r && node scripts/rewrite-registry-origin.mjs public/r",
+    "prebuild": "node --import tsx scripts/bundle-registry.ts",
+    "build": "rm -rf dist && tsc && node --import tsx scripts/copy-generated.ts",
+    "build:shadcn": "node scripts/build-shadcn-registry.mjs && node scripts/rewrite-registry-origin.mjs public/r",
+    "build:publish-artifacts": "node scripts/build-publish-artifacts.mjs",
     "dev": "tsc --watch",
     "type-check": "tsc --noEmit",
     "test": "vitest run",

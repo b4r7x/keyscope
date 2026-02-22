@@ -62,7 +62,7 @@ export const initCommand = new Command("init")
     fileAction(pc.green("+"), `${hooksDir}/`);
 
     writeConfig(cwd, {
-      $schema: "https://keyscope.dev/schema/keyscope.json",
+      $schema: "https://diffgazer.com/schema/keyscope.json",
       version: VERSION,
       aliases: {
         hooks: "@/hooks",
