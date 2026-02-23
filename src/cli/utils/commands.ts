@@ -23,15 +23,20 @@ export function validateHooks(names: string[]): void {
   coreValidateItems(names, getRegistryItem, ITEM_LABEL, LIST_COMMAND);
 }
 
-export function isHookInstalled(cwd: string, hooksFsPath: string, name: string): boolean {
+export function createHookInstallChecker(cwd: string, hooksFsPath: string): (name: string) => boolean {
   const manifest = getManifestHooks(cwd);
-  if (manifest && name in manifest) return true;
+  const hooksDir = resolve(cwd, hooksFsPath);
 
-  // Filesystem fallback for pre-manifest installs
-  const item = getRegistryItem(name);
-  if (!item) return false;
-  return item.files.some((file) => {
-    const relativePath = getRelativePath(file);
-    return existsSync(resolve(cwd, hooksFsPath, relativePath));
-  });
+  return (name: string): boolean => {
+    if (manifest && name in manifest) return true;
+
+    // Filesystem fallback for pre-manifest installs
+    const item = getRegistryItem(name);
+    if (!item) return false;
+
+    return item.files.some((file) => {
+      const relativePath = getRelativePath(file);
+      return existsSync(resolve(hooksDir, relativePath));
+    });
+  };
 }

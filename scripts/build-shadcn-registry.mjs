@@ -6,4 +6,4 @@ import {
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
-buildShadcnRegistryWithOrigin({ rootDir: ROOT });
+buildShadcnRegistryWithOrigin({ rootDir: ROOT, defaultOrigin: "https://diffgazer.com" });

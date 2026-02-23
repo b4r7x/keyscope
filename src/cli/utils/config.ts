@@ -1,5 +1,6 @@
 import {
   z,
+  ALIAS_PATTERN,
   loadJsonConfig,
   writeJsonConfig,
   updateManifest as coreUpdateManifest,
@@ -9,13 +10,11 @@ import {
 } from "@b4r7/cli-core";
 import { CONFIG_FILE } from "../constants.js";
 
-const aliasPattern = /^(@\/|\.\.?\/)/;
-
 export const KeyscopeConfigSchema = z.object({
   $schema: z.string().optional(),
   version: z.string().optional(),
   aliases: z.object({
-    hooks: z.string().regex(aliasPattern, 'Must start with "@/" or a relative path').optional(),
+    hooks: z.string().regex(ALIAS_PATTERN, 'Must start with "@/" or a relative path').optional(),
   }).optional(),
   hooksFsPath: z.string().optional(),
   installedHooks: z.record(z.string(), z.object({

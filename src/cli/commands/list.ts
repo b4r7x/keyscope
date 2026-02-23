@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import { getAllHooks, getPublicHooks, getRelativePath } from "../utils/registry.js";
-import { requireConfig, isHookInstalled } from "../utils/commands.js";
+import { createHookInstallChecker, requireConfig } from "../utils/commands.js";
 import {
   Command,
   runListWorkflow,
@@ -15,6 +15,8 @@ export const listCommand = new Command("list")
   .option("--installed", "Show only installed hooks")
   .action(withErrorHandler(async (opts) => {
     const cwd = resolve(opts.cwd);
+    let isInstalledHook: ((name: string) => boolean) | undefined;
+
     runListWorkflow({
       cwd,
       includeAll: Boolean(opts.all),
@@ -24,8 +26,10 @@ export const listCommand = new Command("list")
       getAllItems: getAllHooks,
       getPublicItems: getPublicHooks,
       requireConfig,
-      isInstalled: ({ cwd, config, item }) =>
-        isHookInstalled(cwd, config.hooksFsPath, item.name),
+      isInstalled: ({ cwd, config, item }) => {
+        isInstalledHook ??= createHookInstallChecker(cwd, config.hooksFsPath);
+        return isInstalledHook(item.name);
+      },
       toDisplayItem: (item) => ({
         name: item.name,
         title: item.title,

@@ -1,33 +1,21 @@
 import { resolve } from "node:path";
 import {
-  getRegistryItem,
   getAllHooks,
   getRelativePath,
 } from "../utils/registry.js";
 import {
   Command,
+  findOrphanedNpmDeps,
   runRemoveWorkflow,
   withErrorHandler,
 } from "@b4r7/cli-core";
-import { requireConfig, validateHooks, isHookInstalled, getHookOrThrow } from "../utils/commands.js";
+import {
+  createHookInstallChecker,
+  getHookOrThrow,
+  requireConfig,
+  validateHooks,
+} from "../utils/commands.js";
 import { updateManifest } from "../utils/config.js";
-
-function findOrphanedNpmDeps(
-  removedNames: string[],
-  cwd: string,
-  hooksFsPath: string,
-): string[] {
-  const removedDeps = new Set(removedNames.flatMap(n => getRegistryItem(n)?.dependencies ?? []));
-  if (removedDeps.size === 0) return [];
-
-  const removedSet = new Set(removedNames);
-  const remainingDeps = new Set(
-    getAllHooks()
-      .filter(h => !removedSet.has(h.name) && isHookInstalled(cwd, hooksFsPath, h.name))
-      .flatMap(h => h.dependencies),
-  );
-  return [...removedDeps].filter(d => !remainingDeps.has(d));
-}
 
 export const removeCommand = new Command("remove")
   .description("Remove hooks from your project")
@@ -37,6 +25,12 @@ export const removeCommand = new Command("remove")
   .option("--dry-run", "Preview changes without removing files", false)
   .action(withErrorHandler(async (hookNames: string[], opts) => {
     const cwd = resolve(opts.cwd);
+    let isInstalledHook: ((name: string) => boolean) | undefined;
+    const getInstallChecker = (hooksFsPath: string): ((name: string) => boolean) => {
+      isInstalledHook ??= createHookInstallChecker(cwd, hooksFsPath);
+      return isInstalledHook;
+    };
+
     await runRemoveWorkflow({
       cwd,
       names: hookNames,
@@ -48,8 +42,8 @@ export const removeCommand = new Command("remove")
       getAllItems: getAllHooks,
       getItemOrThrow: getHookOrThrow,
       getItemName: (item) => item.name,
-      isInstalled: ({ cwd, config, item }) =>
-        isHookInstalled(cwd, config.hooksFsPath, item.name),
+      isInstalled: ({ config, item }) =>
+        getInstallChecker(config.hooksFsPath)(item.name),
       resolveFilesForItem: ({ cwd, config, item }) =>
         item.files.map((file) => ({
           absolutePath: resolve(cwd, config.hooksFsPath, getRelativePath(file)),
@@ -58,7 +52,13 @@ export const removeCommand = new Command("remove")
       updateManifest: ({ cwd, removedNames }) => {
         updateManifest(cwd, undefined, removedNames);
       },
-      findOrphanedDeps: ({ removedNames, cwd, config }) =>
-        findOrphanedNpmDeps(removedNames, cwd, config.hooksFsPath),
+      findOrphanedDeps: ({ removedNames, config }) =>
+        findOrphanedNpmDeps({
+          removedNames,
+          getAllItems: getAllHooks,
+          getItemName: (h) => h.name,
+          getItemDeps: (h) => h.dependencies,
+          isInstalled: (h) => getInstallChecker(config.hooksFsPath)(h.name),
+        }),
     });
   }));

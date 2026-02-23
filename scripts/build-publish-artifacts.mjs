@@ -101,6 +101,7 @@ function main() {
     rootDir: ROOT,
     inputs: INPUTS,
     manifest,
+    defaultOrigin: "https://diffgazer.com",
     ensurePublicRegistry: {
       fixCommand: "pnpm --dir keyscope build:shadcn",
       label: "keyscope public registry index",

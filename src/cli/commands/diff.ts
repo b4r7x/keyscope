@@ -3,16 +3,19 @@ import {
   getPublicHooks,
   getRelativePath,
 } from "../utils/registry.js";
-import { requireConfig, validateHooks, isHookInstalled, getHookOrThrow } from "../utils/commands.js";
+import {
+  createHookInstallChecker,
+  getHookOrThrow,
+  requireConfig,
+  validateHooks,
+} from "../utils/commands.js";
 import {
   Command,
-  pc,
   ensureWithinDir,
-  heading,
+  renderDiffPatch,
   runDiffWorkflow,
   withErrorHandler,
 } from "@b4r7/cli-core";
-import { createTwoFilesPatch } from "diff";
 
 export const diffCommand = new Command("diff")
   .description("Compare local hooks with registry versions")
@@ -20,6 +23,8 @@ export const diffCommand = new Command("diff")
   .option("--cwd <path>", "Working directory", ".")
   .action(withErrorHandler(async (hookNames: string[], opts) => {
     const cwd = resolve(opts.cwd);
+    let isInstalledHook: ((name: string) => boolean) | undefined;
+
     runDiffWorkflow({
       cwd,
       requestedNames: hookNames,
@@ -27,7 +32,10 @@ export const diffCommand = new Command("diff")
       requireConfig,
       resolveDefaultNames: ({ cwd, config }) =>
         getPublicHooks()
-          .filter((hook) => isHookInstalled(cwd, config.hooksFsPath, hook.name))
+          .filter((hook) => {
+            isInstalledHook ??= createHookInstallChecker(cwd, config.hooksFsPath);
+            return isInstalledHook(hook.name);
+          })
           .map((hook) => hook.name),
       validateRequestedNames: validateHooks,
       resolveFilesForName: ({ name, cwd, config }) => {
@@ -49,28 +57,6 @@ export const diffCommand = new Command("diff")
       },
       noInstalledMessage: "No installed hooks found.",
       upToDateMessage: "All hooks are up to date with registry.",
-      renderChangedFile: ({ file, localContent, registryContent }) => {
-        heading(`${file.itemName}/${file.relativePath}`);
-        const patch = createTwoFilesPatch(
-          `upstream/${file.relativePath}`,
-          `local/${file.relativePath}`,
-          registryContent,
-          localContent,
-          "upstream",
-          "local",
-        );
-
-        const diffColors: Record<string, (value: string) => string> = {
-          "+": pc.green,
-          "-": pc.red,
-          "@": pc.cyan,
-        };
-        for (const line of patch.split("\n")) {
-          const prefix = line[0];
-          const color = prefix && diffColors[prefix];
-          const isHeader = line.startsWith("+++") || line.startsWith("---");
-          console.log(color && !isHeader ? color(line) : line);
-        }
-      },
+      renderChangedFile: renderDiffPatch,
     });
   }));

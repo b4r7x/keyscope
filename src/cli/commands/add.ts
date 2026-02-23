@@ -4,19 +4,19 @@ import {
   getPublicHooks,
   getRelativePath,
   resolveRegistryDeps,
-  getRegistryItem,
 } from "../utils/registry.js";
 import {
-  Command, ensureWithinDir, getInstalledDeps,
+  Command,
+  depName,
+  ensureWithinDir,
+  getInstalledDeps,
+  normalizeVersionSpec,
   runAddWorkflow,
-  info, warn, withErrorHandler,
-  depName, normalizeVersionSpec,
-} from "@b4r7/cli-core";
-import { requireConfig, validateHooks } from "../utils/commands.js";
-import { updateManifest, type ManifestInstallMetadata } from "../utils/config.js";
-import {
   type FileOp,
+  withErrorHandler,
 } from "@b4r7/cli-core";
+import { getHookOrThrow, requireConfig, validateHooks } from "../utils/commands.js";
+import { updateManifest, type ManifestInstallMetadata } from "../utils/config.js";
 import { VERSION } from "../constants.js";
 
 type AddMode = "copy" | "package";
@@ -53,6 +53,7 @@ export const addCommand = new Command("add")
   .option("--keyscope-version <version>", "Version/tag used in package mode", "latest")
   .option("--overwrite", "Overwrite existing files", false)
   .option("--dry-run", "Preview changes without writing files", false)
+  .option("--skip-install", "Write files without installing npm dependencies (offline-friendly)", false)
   .option("-y, --yes", "Skip confirmation prompts", false)
   .action(withErrorHandler(async (hookNames: string[], opts) => {
     const cwd = resolve(opts.cwd);
@@ -66,6 +67,7 @@ export const addCommand = new Command("add")
       yes: Boolean(opts.yes),
       dryRun: Boolean(opts.dryRun),
       overwrite: Boolean(opts.overwrite),
+      skipInstall: Boolean(opts.skipInstall),
       itemLabel: "Hook",
       itemPlural: "hooks",
       listCommand: "npx keyscope list",
@@ -83,10 +85,7 @@ export const addCommand = new Command("add")
 
         const fileOps: FileOp[] = [];
         for (const name of resolved) {
-          const item = getRegistryItem(name);
-          if (!item) {
-            throw new Error(`Registry item "${name}" not found.`);
-          }
+          const item = getHookOrThrow(name);
 
           for (const file of item.files) {
             const relativePath = getRelativePath(file);
