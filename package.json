@@ -31,7 +31,7 @@
   },
   "scripts": {
     "prebuild": "node --import tsx scripts/bundle-registry.ts",
-    "build": "rm -rf dist && tsc && node --import tsx scripts/copy-generated.ts",
+    "build": "rm -rf dist && tsc && node --import tsx scripts/copy-generated.ts && node scripts/build-publish-artifacts.mjs",
     "build:shadcn": "node scripts/build-shadcn-registry.mjs",
     "build:artifacts": "node scripts/build-publish-artifacts.mjs",
     "dev": "tsc --watch",
@@ -79,6 +79,7 @@
   },
   "dependencies": {
     "@b4r7/cli-core": "workspace:*",
+    "@b4r7x/registry-kit": "workspace:*",
     "diff": "^8.0.3"
   }
 }

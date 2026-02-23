@@ -2,8 +2,8 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   z,
-  RegistryFileSchema as CoreRegistryFileSchema,
-  RegistryItemSchema as CoreRegistryItemSchema,
+  RegistryContentFileSchema,
+  RegistryContentItemSchema,
   resolveRegistryDeps as coreResolveRegistryDeps,
   collectNpmDeps as coreCollectNpmDeps,
   getRelativePath as coreGetRelativePath,
@@ -14,21 +14,13 @@ import { ITEM_LABEL } from "../constants.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const RegistryFileSchema = CoreRegistryFileSchema.extend({
-  content: z.string(),
-});
-
-const RegistryItemSchema = CoreRegistryItemSchema.extend({
-  files: z.array(RegistryFileSchema),
-});
-
 const RegistryBundleSchema = z.object({
-  items: z.array(RegistryItemSchema),
+  items: z.array(RegistryContentItemSchema),
   integrity: z.string().optional(),
 });
 
-export type RegistryFile = z.infer<typeof RegistryFileSchema>;
-export type RegistryItem = z.infer<typeof RegistryItemSchema>;
+export type RegistryFile = z.infer<typeof RegistryContentFileSchema>;
+export type RegistryItem = z.infer<typeof RegistryContentItemSchema>;
 export type RegistryBundle = z.infer<typeof RegistryBundleSchema>;
 
 const REGISTRY_HOOKS_PREFIXES = ["registry/hooks/", "src/hooks/"] as const;

@@ -1,0 +1,24 @@
+{
+  "name": "@b4r7x/keyscope-artifacts",
+  "version": "0.1.0",
+  "description": "Docs and registry artifacts for keyscope (consumed by docs host)",
+  "type": "module",
+  "private": false,
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "node scripts/copy-artifacts.mjs",
+    "prepublishOnly": "test -f dist/artifacts/artifact-manifest.json && test -f dist/artifacts/fingerprint.sha256"
+  },
+  "devDependencies": {
+    "keyscope": "workspace:*"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT"
+}

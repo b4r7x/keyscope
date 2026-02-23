@@ -1,11 +1,17 @@
 import { resolve } from "node:path";
-import { readFileSync, existsSync } from "node:fs";
 import {
   getPublicHooks,
   getRelativePath,
 } from "../utils/registry.js";
 import { requireConfig, validateHooks, isHookInstalled, getHookOrThrow } from "../utils/commands.js";
-import { Command, pc, ensureWithinDir, info, heading, withErrorHandler } from "@b4r7/cli-core";
+import {
+  Command,
+  pc,
+  ensureWithinDir,
+  heading,
+  runDiffWorkflow,
+  withErrorHandler,
+} from "@b4r7/cli-core";
 import { createTwoFilesPatch } from "diff";
 
 export const diffCommand = new Command("diff")
@@ -14,61 +20,47 @@ export const diffCommand = new Command("diff")
   .option("--cwd <path>", "Working directory", ".")
   .action(withErrorHandler(async (hookNames: string[], opts) => {
     const cwd = resolve(opts.cwd);
-    const config = requireConfig(cwd);
+    runDiffWorkflow({
+      cwd,
+      requestedNames: hookNames,
+      itemPlural: "hooks",
+      requireConfig,
+      resolveDefaultNames: ({ cwd, config }) =>
+        getPublicHooks()
+          .filter((hook) => isHookInstalled(cwd, config.hooksFsPath, hook.name))
+          .map((hook) => hook.name),
+      validateRequestedNames: validateHooks,
+      resolveFilesForName: ({ name, cwd, config }) => {
+        const hooksDir = resolve(cwd, config.hooksFsPath);
+        const item = getHookOrThrow(name);
 
-    let names = hookNames;
-    if (names.length === 0) {
-      names = getPublicHooks()
-        .filter(h => isHookInstalled(cwd, config.hooksFsPath, h.name))
-        .map(h => h.name);
-      if (names.length === 0) {
-        info("No installed hooks found.");
-        return;
-      }
-    } else {
-      validateHooks(names);
-    }
+        return item.files.map((file) => {
+          const relativePath = getRelativePath(file);
+          const localPath = resolve(cwd, config.hooksFsPath, relativePath);
+          ensureWithinDir(localPath, hooksDir);
 
-    const hooksDir = resolve(cwd, config.hooksFsPath);
-    let changed = 0;
-    let unchanged = 0;
-    let notInstalled = 0;
-
-    for (const name of names) {
-      const item = getHookOrThrow(name);
-
-      for (const file of item.files) {
-        const relativePath = getRelativePath(file);
-        const localPath = resolve(cwd, config.hooksFsPath, relativePath);
-        ensureWithinDir(localPath, hooksDir);
-
-        if (!existsSync(localPath)) {
-          info(`${pc.dim(name + "/")}${relativePath}: ${pc.yellow("not installed")}`);
-          notInstalled++;
-          continue;
-        }
-
-        const localContent = readFileSync(localPath, "utf-8");
-        const registryContent = file.content;
-
-        if (localContent === registryContent) {
-          unchanged++;
-          continue;
-        }
-
-        changed++;
-        heading(`${name}/${relativePath}`);
-
+          return {
+            itemName: name,
+            relativePath,
+            localPath,
+            registryContent: file.content,
+          };
+        });
+      },
+      noInstalledMessage: "No installed hooks found.",
+      upToDateMessage: "All hooks are up to date with registry.",
+      renderChangedFile: ({ file, localContent, registryContent }) => {
+        heading(`${file.itemName}/${file.relativePath}`);
         const patch = createTwoFilesPatch(
-          `upstream/${relativePath}`,
-          `local/${relativePath}`,
+          `upstream/${file.relativePath}`,
+          `local/${file.relativePath}`,
           registryContent,
           localContent,
           "upstream",
           "local",
         );
 
-        const diffColors: Record<string, (s: string) => string> = {
+        const diffColors: Record<string, (value: string) => string> = {
           "+": pc.green,
           "-": pc.red,
           "@": pc.cyan,
@@ -79,17 +71,6 @@ export const diffCommand = new Command("diff")
           const isHeader = line.startsWith("+++") || line.startsWith("---");
           console.log(color && !isHeader ? color(line) : line);
         }
-      }
-    }
-
-    console.log();
-    if (changed === 0 && notInstalled === 0) {
-      info("All hooks are up to date with registry.");
-    } else {
-      const parts: string[] = [];
-      if (changed > 0) parts.push(`${changed} changed`);
-      if (unchanged > 0) parts.push(`${unchanged} unchanged`);
-      if (notInstalled > 0) parts.push(`${notInstalled} not installed`);
-      info(`Summary: ${parts.join(", ")}.`);
-    }
+      },
+    });
   }));

@@ -3,7 +3,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   buildRegistryArtifacts,
-} from "@b4r7/cli-core/artifacts";
+} from "@b4r7x/registry-kit";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
