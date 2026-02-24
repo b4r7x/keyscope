@@ -35,6 +35,27 @@ npm install keyscope
 
 Requires React 19+ as a peer dependency.
 
+### Hook categories
+
+keyscope hooks are split into two categories:
+
+**Standalone hooks** — work independently, no `KeyboardProvider` needed. Can be copy-pasted into your project as individual files with zero dependencies:
+
+| Hook | Purpose |
+|------|---------|
+| `useNavigation` | Arrow key navigation for lists, tabs, menus. Queries `[role][data-value]` elements |
+| `useFocusTrap` | Trap Tab key within a container (modals, dialogs) |
+| `useScrollLock` | Prevent body/element scrolling with reference counting |
+
+**Provider-dependent hooks** — require `KeyboardProvider` context. Install the full keyscope package:
+
+| Hook | Purpose |
+|------|---------|
+| `useKey` | Register scoped hotkey handlers (`Ctrl+K`, `Escape`, etc.) |
+| `useScope` | Push/pop scope for layered UIs (dialog over modal over app) |
+| `useScopedNavigation` | Like `useNavigation` but scope-aware (only active scope receives events) |
+| `useFocusZone` | Multi-zone focus management with keyboard transitions between zones |
+
 ### Install standalone hooks via shadcn
 
 If you only need the three standalone hooks (`useNavigation`, `useFocusTrap`, `useScrollLock`) and don't want the full keyscope package, you can install them directly into your project via the shadcn CLI:

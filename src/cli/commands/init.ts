@@ -1,9 +1,8 @@
-import { existsSync, mkdirSync } from "node:fs";
+import { mkdirSync } from "node:fs";
 import { resolve } from "node:path";
-import { Command, pc, detectPackageManager, detectSourceDir, ensureWithinDir, info, success, warn, heading, fileAction, promptConfirm, withErrorHandler } from "@b4r7/cli-core";
+import { Command, detectPackageManager, detectSourceDir, ensureWithinDir, runInitWorkflow, withErrorHandler } from "@b4r7/cli-core";
 import { writeConfig, loadConfig } from "../utils/config.js";
-import { CONFIG_FILE } from "../constants.js";
-import { VERSION } from "../constants.js";
+import { CONFIG_FILE, VERSION } from "../constants.js";
 
 export const initCommand = new Command("init")
   .description("Initialize keyscope hooks CLI in your project")
@@ -13,66 +12,37 @@ export const initCommand = new Command("init")
   .option("--force", "Overwrite existing configuration", false)
   .action(withErrorHandler(async (opts) => {
     const cwd = resolve(opts.cwd);
-
-    if (!existsSync(resolve(cwd, "package.json"))) {
-      throw new Error("No package.json found. Run `npm init` first.");
-    }
-
-    const existing = loadConfig(cwd);
-    if (existing.ok && !opts.force) {
-      warn("keyscope is already initialized in this project.");
-      info(`Config: ${resolve(cwd, CONFIG_FILE)}`);
-      info("Use --force to re-initialize.");
-      return;
-    }
-
-    if (
-      !existing.ok
-      && (existing.error === "parse_error" || existing.error === "validation_error")
-      && !opts.force
-    ) {
-      throw new Error(
-        `${CONFIG_FILE} is malformed: ${existing.message}\n`
-        + `Fix the syntax error, delete ${CONFIG_FILE}, or use --force to re-initialize.`,
-      );
-    }
-
     const packageManager = detectPackageManager(cwd);
     const sourceDir = detectSourceDir(cwd);
     const hooksDir = opts.hooksDir || `${sourceDir}/hooks`;
 
     ensureWithinDir(resolve(cwd, hooksDir), cwd);
 
-    heading("Detected:");
-    info(`Package manager: ${packageManager}`);
-    info(`Source dir: ${sourceDir}/`);
-    info(`Hooks dir: ${hooksDir}`);
-    console.log();
-
-    if (!opts.yes) {
-      const proceed = await promptConfirm("Continue with initialization?");
-      if (!proceed) {
-        info("Cancelled.");
-        return;
-      }
-    }
-
-    heading("Creating files...");
-    mkdirSync(resolve(cwd, hooksDir), { recursive: true });
-    fileAction(pc.green("+"), `${hooksDir}/`);
-
-    writeConfig(cwd, {
-      $schema: "https://diffgazer.com/schema/keyscope.json",
-      version: VERSION,
-      aliases: {
-        hooks: "@/hooks",
+    await runInitWorkflow({
+      cwd,
+      configFileName: CONFIG_FILE,
+      yes: opts.yes,
+      force: opts.force,
+      loadConfig,
+      detectProject: () => ({
+        display: [
+          ["Package manager", packageManager],
+          ["Source dir", `${sourceDir}/`],
+          ["Hooks dir", hooksDir],
+        ],
+      }),
+      createFiles: (cwd) => {
+        mkdirSync(resolve(cwd, hooksDir), { recursive: true });
+        return [{ action: "created", path: `${hooksDir}/` }];
       },
-      hooksFsPath: hooksDir,
+      writeConfig: (cwd) => {
+        writeConfig(cwd, {
+          $schema: "https://diffgazer.com/schema/keyscope.json",
+          version: VERSION,
+          aliases: { hooks: "@/hooks" },
+          hooksFsPath: hooksDir,
+        });
+      },
+      nextSteps: ["Add hooks with: npx keyscope add <hook>"],
     });
-
-    fileAction(pc.green("+"), CONFIG_FILE);
-    console.log();
-    success("Done!");
-    info("Add hooks with: npx keyscope add <hook>");
-    console.log();
   }));
