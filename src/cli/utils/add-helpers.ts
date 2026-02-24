@@ -1,12 +1,10 @@
+import { parseEnumOption } from "@b4r7/cli-core";
+
 export type AddMode = "copy" | "package";
+const VALID_MODES = ["copy", "package"] as const;
 
 export function parseMode(raw: unknown): AddMode {
-  const mode = String(raw ?? "copy").toLowerCase();
-  if (mode === "copy" || mode === "package") {
-    return mode;
-  }
-
-  throw new Error(`Invalid value for --mode: "${raw}". Expected one of: copy, package.`);
+  return parseEnumOption(String(raw ?? "copy").toLowerCase(), VALID_MODES, "--mode");
 }
 
 export function applyModeDeps(deps: string[], mode: AddMode, keyscopeVersionSpec: string): string[] {

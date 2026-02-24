@@ -16,7 +16,7 @@ describe("parseMode", () => {
   });
 
   it("throws for invalid values", () => {
-    expect(() => parseMode("invalid")).toThrow('Invalid value for --mode: "invalid"');
+    expect(() => parseMode("invalid")).toThrow('Invalid --mode: "invalid"');
   });
 
   it('defaults to "copy" for undefined', () => {

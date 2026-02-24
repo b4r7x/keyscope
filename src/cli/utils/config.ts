@@ -5,7 +5,7 @@ import {
   writeJsonConfig,
   updateManifest as coreUpdateManifest,
   aliasToFsPath,
-  detectSourceDirFromTsconfig,
+  detectSourceDir,
   type ConfigLoadResult,
 } from "@b4r7/cli-core";
 import { CONFIG_FILE } from "../constants.js";
@@ -47,7 +47,7 @@ export function resolveConfig(raw: KeyscopeConfig, cwd?: string): ResolvedConfig
 
   let hooksFsPath = raw.hooksFsPath;
   if (!hooksFsPath) {
-    const sourceDir = cwd ? detectSourceDirFromTsconfig(cwd) : ".";
+    const sourceDir = cwd ? detectSourceDir(cwd) : ".";
     hooksFsPath = aliasToFsPath(aliases.hooks, sourceDir);
   }
 

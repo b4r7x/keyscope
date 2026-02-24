@@ -1,9 +1,9 @@
-import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { loadResolvedConfig, getManifestHooks, type ResolvedConfig } from "./config.js";
 import { getRegistryItem, getRelativePath, type RegistryItem } from "./registry.js";
 import {
   createRequireConfig,
+  createInstallChecker,
   getItemOrThrow as coreGetItemOrThrow,
   validateItems as coreValidateItems,
 } from "@b4r7/cli-core";
@@ -24,19 +24,11 @@ export function validateHooks(names: string[]): void {
 }
 
 export function createHookInstallChecker(cwd: string, hooksFsPath: string): (name: string) => boolean {
-  const manifest = getManifestHooks(cwd);
-  const hooksDir = resolve(cwd, hooksFsPath);
-
-  return (name: string): boolean => {
-    if (manifest && name in manifest) return true;
-
-    // Filesystem fallback for pre-manifest installs
-    const item = getRegistryItem(name);
-    if (!item) return false;
-
-    return item.files.some((file) => {
-      const relativePath = getRelativePath(file);
-      return existsSync(resolve(hooksDir, relativePath));
-    });
-  };
+  return createInstallChecker({
+    getManifest: () => getManifestHooks(cwd),
+    getItem: getRegistryItem,
+    getRelativePath: (file) => getRelativePath(file),
+    installDir: resolve(cwd, hooksFsPath),
+    extensions: [],
+  });
 }
