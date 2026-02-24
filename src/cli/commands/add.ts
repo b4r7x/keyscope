@@ -19,30 +19,7 @@ import { getHookOrThrow, requireConfig, validateHooks } from "../utils/commands.
 import { updateManifest, type ManifestInstallMetadata } from "../utils/config.js";
 import { VERSION } from "../constants.js";
 
-type AddMode = "copy" | "package";
-
-function parseMode(raw: unknown): AddMode {
-  const mode = String(raw ?? "copy").toLowerCase();
-  if (mode === "copy" || mode === "package") {
-    return mode;
-  }
-
-  throw new Error(`Invalid value for --mode: "${raw}". Expected one of: copy, package.`);
-}
-
-function applyModeDeps(deps: string[], mode: AddMode, keyscopeVersionSpec: string): string[] {
-  const depSet = new Set(deps.filter((dep) => !dep.startsWith("keyscope@")));
-
-  if (mode === "copy") {
-    depSet.delete("keyscope");
-    return [...depSet];
-  }
-
-  depSet.delete("keyscope");
-  depSet.add(keyscopeVersionSpec === "latest" ? "keyscope" : `keyscope@${keyscopeVersionSpec}`);
-
-  return [...depSet];
-}
+import { parseMode, applyModeDeps } from "../utils/add-helpers.js";
 
 export const addCommand = new Command("add")
   .description("Add keyscope hooks to your project")

@@ -61,4 +61,68 @@ describe("useScrollLock", () => {
 
     container.remove();
   });
+
+  it("handles multiple lock/unlock cycles on same element", () => {
+    document.body.style.overflow = "auto";
+
+    const { unmount: u1 } = renderHook(() => useScrollLock());
+    expect(document.body.style.overflow).toBe("hidden");
+    u1();
+    expect(document.body.style.overflow).toBe("auto");
+
+    const { unmount: u2 } = renderHook(() => useScrollLock());
+    expect(document.body.style.overflow).toBe("hidden");
+    u2();
+    expect(document.body.style.overflow).toBe("auto");
+  });
+
+  it("restores correctly when second component unmounts before first", () => {
+    const { unmount: unmount1 } = renderHook(() => useScrollLock());
+    const { unmount: unmount2 } = renderHook(() => useScrollLock());
+
+    expect(document.body.style.overflow).toBe("hidden");
+
+    unmount2();
+    expect(document.body.style.overflow).toBe("hidden");
+
+    unmount1();
+    expect(document.body.style.overflow).toBe("");
+  });
+
+  it("re-enables after toggling enabled true→false→true", () => {
+    const { rerender } = renderHook(
+      ({ enabled }) => useScrollLock(undefined, enabled),
+      { initialProps: { enabled: true } },
+    );
+    expect(document.body.style.overflow).toBe("hidden");
+
+    rerender({ enabled: false });
+    expect(document.body.style.overflow).toBe("");
+
+    rerender({ enabled: true });
+    expect(document.body.style.overflow).toBe("hidden");
+  });
+
+  it("locks element when target ref is provided after initial undefined", () => {
+    const container = document.createElement("div");
+    container.style.overflow = "auto";
+    document.body.appendChild(container);
+
+    // First render: no target → locks body
+    const { unmount } = renderHook(() => useScrollLock());
+    expect(document.body.style.overflow).toBe("hidden");
+    unmount();
+
+    // Second render: target ref → locks container
+    const { unmount: unmount2 } = renderHook(() => {
+      const ref = useRef<HTMLElement>(container);
+      useScrollLock(ref);
+    });
+    expect(container.style.overflow).toBe("hidden");
+
+    unmount2();
+    expect(container.style.overflow).toBe("auto");
+
+    container.remove();
+  });
 });

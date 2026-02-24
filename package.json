@@ -23,7 +23,6 @@
     "dist",
     "registry",
     "public/r",
-    "docs",
     "internal-docs-manifest.json"
   ],
   "bugs": {
