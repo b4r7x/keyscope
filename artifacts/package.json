@@ -12,6 +12,7 @@
     "prepublishOnly": "test -f dist/artifacts/artifact-manifest.json && test -f dist/artifacts/fingerprint.sha256"
   },
   "devDependencies": {
+    "@b4r7x/registry-kit": "workspace:*",
     "keyscope": "workspace:*"
   },
   "engines": {

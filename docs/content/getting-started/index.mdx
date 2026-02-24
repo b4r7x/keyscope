@@ -1,0 +1,40 @@
+---
+title: Introduction
+description: Composable, scoped keyboard navigation hooks for React 19.
+---
+
+keyscope provides keyboard navigation hooks for React 19 applications. Zero external dependencies, ~1.5 KB gzipped.
+
+## Hook Categories
+
+keyscope has two categories of hooks, each with a different install model:
+
+### Standalone Hooks
+
+These work independently with no provider or runtime dependency. They are copied into your project as local source files via `keyscope add --mode copy`.
+
+| Hook | Purpose |
+|------|---------|
+| `useNavigation` | Arrow key list navigation with Enter/Space selection |
+| `useFocusTrap` | Trap Tab focus within a container (modals, dialogs) |
+| `useScrollLock` | Prevent body/element scrolling with concurrent lock support |
+
+### Provider-Dependent Hooks
+
+These require `KeyboardProvider` context and are installed as a package dependency via `keyscope add --mode package`.
+
+| Hook | Purpose |
+|------|---------|
+| `useKey` | Register scoped hotkey handlers (single key, array, or key map) |
+| `useScope` | Push/pop keyboard scope for layered handler execution |
+| `useScopedNavigation` | Navigation within the active scope only |
+| `useFocusZone` | Multi-zone focus with arrow key transitions between zones |
+
+## Integration with diff-ui
+
+diff-ui components are visual-only and can optionally integrate keyscope hooks for keyboard accessibility. When both registries are configured, keyboard-enabled diff-ui components install keyscope hooks automatically through `registryDependencies`.
+
+## Next Steps
+
+- [Installation](/keyscope/docs/getting-started/installation) -- set up the CLI or shadcn registry
+- [API Reference](/keyscope/docs/api/reference) -- full hook API documentation
