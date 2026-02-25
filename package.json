@@ -33,6 +33,7 @@
     "build": "rm -rf dist && tsc && node --import tsx scripts/copy-generated.ts && node scripts/build-publish-artifacts.mjs",
     "build:shadcn": "node scripts/build-shadcn-registry.mjs",
     "build:artifacts": "node scripts/build-publish-artifacts.mjs",
+    "build:docs-data": "tsx scripts/build-docs-data.ts",
     "dev": "tsc --watch",
     "type-check": "tsc --noEmit",
     "test": "vitest run",

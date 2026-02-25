@@ -1,4 +1,5 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { execSync } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -10,50 +11,17 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const INPUTS = [
   "docs/content",
   "docs/assets",
+  "docs/generated",
   "registry",
   "public/r",
   "internal-docs-manifest.json",
   "package.json",
 ];
 
-function toCodeBlockLines(raw) {
-  return raw.split("\n").map((line, index) => ({
-    number: index + 1,
-    content: line,
-  }));
-}
-
-function generateKeyscopeHooksData() {
-  const registryPath = resolve(ROOT, "registry/registry.json");
-  const registry = JSON.parse(readFileSync(registryPath, "utf-8"));
-  const hooks = registry.items
-    .filter((item) => item.type === "registry:hook" && item.meta?.hidden !== true)
-    .sort((a, b) => a.name.localeCompare(b.name));
-
-  const data = {};
-  for (const item of hooks) {
-    const firstFile = item.files[0];
-    if (!firstFile?.path) continue;
-    const sourcePath = resolve(ROOT, firstFile.path);
-    if (!existsSync(sourcePath)) {
-      throw new Error(`Hook source file not found for "${item.name}": ${sourcePath}`);
-    }
-
-    const raw = readFileSync(sourcePath, "utf-8");
-    data[item.name] = {
-      name: item.name,
-      title: item.title ?? item.name,
-      description: item.description ?? "",
-      source: {
-        raw,
-        highlighted: toCodeBlockLines(raw),
-      },
-    };
-  }
-  return data;
-}
-
 function main() {
+  // Generate enriched hook data (docs/generated/) before building artifacts
+  console.log("[keyscope] generating enriched hook data...");
+  execSync("node --import tsx scripts/build-docs-data.ts", { cwd: ROOT, stdio: "inherit" });
   const pkg = JSON.parse(readFileSync(resolve(ROOT, "package.json"), "utf-8"));
   const manifest = {
     schemaVersion: 1,
@@ -79,6 +47,8 @@ function main() {
     },
     generated: {
       keyscopeHooksFile: "generated/keyscope-hooks.json",
+      hookList: "generated/hook-list.json",
+      hooksDir: "generated/hooks",
     },
     integrity: {
       algorithm: "sha256",
@@ -97,6 +67,8 @@ function main() {
     copyDirs.push({ from: "docs/assets", to: "assets" });
   }
 
+  copyDirs.push({ from: "docs/generated", to: "generated" });
+
   const result = buildRegistryArtifacts({
     rootDir: ROOT,
     inputs: INPUTS,
@@ -111,17 +83,20 @@ function main() {
       { path: "registry", label: "keyscope registry source" },
       { path: "public/r", label: "keyscope public registry" },
       { path: "public/r/registry.json", label: "keyscope public registry index" },
+      { path: "docs/generated/keyscope-hooks.json", label: "keyscope hooks data (backward compat)" },
+      { path: "docs/generated/hook-list.json", label: "keyscope hook list" },
     ],
     copyDirs,
     rewriteDirs: ["registry", "source/registry"],
     afterCopy: ({ artifactRoot }) => {
-      const generatedDir = resolve(artifactRoot, "generated");
-      mkdirSync(generatedDir, { recursive: true });
-      const hooksData = generateKeyscopeHooksData();
-      writeFileSync(
-        resolve(generatedDir, "keyscope-hooks.json"),
-        `${JSON.stringify(hooksData, null, 2)}\n`,
-      );
+      // Verify expected generated files were copied
+      const expectedFiles = ["generated/keyscope-hooks.json", "generated/hook-list.json"];
+      for (const file of expectedFiles) {
+        const filePath = resolve(artifactRoot, file);
+        if (!existsSync(filePath)) {
+          throw new Error(`Expected artifact file missing: ${file}`);
+        }
+      }
     },
   });
 

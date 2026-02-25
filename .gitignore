@@ -5,3 +5,4 @@ public/r/
 .DS_Store
 examples/playground/dist/
 src/cli/generated/
+docs/generated/

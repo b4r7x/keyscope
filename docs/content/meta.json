@@ -4,6 +4,8 @@
   "pages": [
     "---Getting Started---",
     "...getting-started",
+    "---Hooks---",
+    "...hooks",
     "---API---",
     "...api",
     "---Guides---",
