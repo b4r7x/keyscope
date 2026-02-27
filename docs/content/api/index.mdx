@@ -1,0 +1,38 @@
+---
+title: API Overview
+description: Quick reference for all public exports from keyscope.
+---
+
+# API Overview
+
+Complete reference for all public exports from `keyscope`. Requires React 19+.
+
+> See the [interactive playground](https://github.com/b4r7x/keyscope/tree/main/examples/playground) for live demos of each hook.
+
+---
+
+## Provider
+
+| Export | Description |
+|--------|-------------|
+| [KeyboardProvider](/keyscope/docs/api/keyboard-provider) | Context provider that enables scoped keyboard handling. Wraps your app or subtree. |
+
+## Hooks
+
+| Hook | Category | Description |
+|------|----------|-------------|
+| [useKey](/keyscope/docs/hooks/use-key) | Provider | Bind keyboard shortcuts with scoped, document-level, or element-targeted listening. |
+| [useScope](/keyscope/docs/hooks/use-scope) | Provider | Push a named scope onto the keyboard scope stack. |
+| [useNavigation](/keyscope/docs/hooks/use-navigation) | Standalone | Standalone keyboard navigation for role-based lists and tabs. |
+| [useScopedNavigation](/keyscope/docs/hooks/use-scoped-navigation) | Provider | Scope-aware keyboard navigation registered via KeyboardProvider. |
+| [useFocusZone](/keyscope/docs/hooks/use-focus-zone) | Provider | Manage focus across multiple zones with arrow key and Tab transitions. |
+| [useFocusTrap](/keyscope/docs/hooks/use-focus-trap) | Standalone | Trap Tab focus within a container element. |
+| [useScrollLock](/keyscope/docs/hooks/use-scroll-lock) | Standalone | Prevent body/element scrolling with reference counting. |
+
+## References
+
+| Page | Description |
+|------|-------------|
+| [Hotkey Format](/keyscope/docs/api/hotkey-format) | Modifier syntax, key aliases, and matching rules for hotkey strings. |
+| [Utilities](/keyscope/docs/api/utilities) | Helper functions: `keys` and `useOptionalKeyboardContext`. |
+| [Types](/keyscope/docs/api/types) | Shared TypeScript interfaces and type definitions. |

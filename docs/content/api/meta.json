@@ -1,4 +1,4 @@
 {
   "title": "API",
-  "pages": ["reference"]
+  "pages": ["index", "keyboard-provider", "hotkey-format", "utilities", "types"]
 }
