@@ -4,6 +4,7 @@ import {
   z,
   RegistryContentFileSchema,
   RegistryContentItemSchema,
+  BaseRegistryBundleSchema,
   resolveRegistryDeps as coreResolveRegistryDeps,
   collectNpmDeps as coreCollectNpmDeps,
   getRelativePath as coreGetRelativePath,
@@ -14,10 +15,7 @@ import { ITEM_LABEL } from "../constants.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const RegistryBundleSchema = z.object({
-  items: z.array(RegistryContentItemSchema),
-  integrity: z.string().optional(),
-});
+const RegistryBundleSchema = BaseRegistryBundleSchema;
 
 export type RegistryFile = z.infer<typeof RegistryContentFileSchema>;
 export type RegistryItem = z.infer<typeof RegistryContentItemSchema>;

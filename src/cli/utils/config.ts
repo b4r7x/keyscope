@@ -1,6 +1,6 @@
 import {
   z,
-  ALIAS_PATTERN,
+  aliasPathSchema,
   loadJsonConfig,
   writeJsonConfig,
   updateManifest as coreUpdateManifest,
@@ -14,7 +14,7 @@ export const KeyscopeConfigSchema = z.object({
   $schema: z.string().optional(),
   version: z.string().optional(),
   aliases: z.object({
-    hooks: z.string().regex(ALIAS_PATTERN, 'Must start with "@/" or a relative path').optional(),
+    hooks: aliasPathSchema,
   }).optional(),
   hooksFsPath: z.string().optional(),
   installedHooks: z.record(z.string(), z.object({
