@@ -59,6 +59,12 @@ function queryElements(
   return Array.from(containerRef.current.querySelectorAll<HTMLElement>(selector));
 }
 
+function wrapIndex(index: number, length: number, wrap: boolean): number | null {
+  if (index < 0) return wrap ? length - 1 : null;
+  if (index >= length) return wrap ? 0 : null;
+  return index;
+}
+
 /**
  * Core navigation state and movement logic.
  * Used internally by useNavigation and useScopedNavigation.
@@ -125,22 +131,11 @@ export function useNavigationCore({
       if (elements.length === 0) return;
 
       const current = getFocusedIndex();
-      let next = current + delta;
-
-      if (next < 0) {
-        if (wrap) {
-          next = elements.length - 1;
-        } else {
-          onBoundaryReached?.("up");
-          return;
-        }
-      } else if (next >= elements.length) {
-        if (wrap) {
-          next = 0;
-        } else {
-          onBoundaryReached?.("down");
-          return;
-        }
+      const rawNext = current + delta;
+      const next = wrapIndex(rawNext, elements.length, wrap);
+      if (next === null) {
+        onBoundaryReached?.(delta < 0 ? "up" : "down");
+        return;
       }
 
       focusIndex(next);
