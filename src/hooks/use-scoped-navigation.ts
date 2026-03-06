@@ -73,4 +73,3 @@ export function useScopedNavigation(options: UseScopedNavigationOptions): UseSco
   return { highlighted, isHighlighted, highlight };
 }
 
-export type { NavigationRole, UseNavigationOptions } from "./use-navigation.js";
