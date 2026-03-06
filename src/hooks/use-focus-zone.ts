@@ -64,19 +64,11 @@ export function useFocusZone<T extends string>(
     },
   );
 
-  const stableTabCycle = useEffectEvent(() => {
+  const cycleZone = useEffectEvent((delta: 1 | -1) => {
     if (!options.tabCycle || options.tabCycle.length === 0) return;
     const cycle = options.tabCycle;
     const idx = cycle.indexOf(currentZone);
-    const next = cycle[(idx + 1) % cycle.length]!;
-    setZoneValue(next);
-  });
-
-  const stableTabCycleReverse = useEffectEvent(() => {
-    if (!options.tabCycle || options.tabCycle.length === 0) return;
-    const cycle = options.tabCycle;
-    const idx = cycle.indexOf(currentZone);
-    const next = cycle[(idx - 1 + cycle.length) % cycle.length]!;
+    const next = cycle[(idx + delta + cycle.length) % cycle.length]!;
     setZoneValue(next);
   });
 
@@ -86,12 +78,12 @@ export function useFocusZone<T extends string>(
     { enabled: enabled && options.transitions != null },
   );
 
-  useKey("Tab", stableTabCycle, {
+  useKey("Tab", () => cycleZone(1), {
     enabled: enabled && options.tabCycle != null,
     preventDefault: true,
   });
 
-  useKey("shift+Tab", stableTabCycleReverse, {
+  useKey("shift+Tab", () => cycleZone(-1), {
     enabled: enabled && options.tabCycle != null,
     preventDefault: true,
   });

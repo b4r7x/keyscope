@@ -60,7 +60,7 @@ export function useScopedNavigation(options: UseScopedNavigationOptions): UseSco
       Home: (e) => dispatch("Home", e),
       End: (e) => dispatch("End", e),
       Enter: (e) => dispatch("Enter", e),
-      " ": dispatch.bind(null, " "),
+      " ": (e) => dispatch(" ", e),
     },
     {
       enabled,

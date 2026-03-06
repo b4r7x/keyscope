@@ -1,14 +1,5 @@
 import { resolve } from "node:path";
-import {
-  getAllHooks,
-  getRelativePath,
-} from "../utils/registry.js";
-import {
-  Command,
-  findOrphanedNpmDeps,
-  runRemoveWorkflow,
-  withErrorHandler,
-} from "@b4r7/cli-core";
+import { getAllHooks, getRelativePath } from "../utils/registry.js";
 import {
   createHookInstallChecker,
   getHookOrThrow,
@@ -16,49 +7,35 @@ import {
   validateHooks,
 } from "../utils/commands.js";
 import { updateManifest } from "../utils/config.js";
+import { createRemoveCommand, findOrphanedNpmDeps } from "@b4r7/cli-core";
 
-export const removeCommand = new Command("remove")
-  .description("Remove hooks from your project")
-  .argument("<hooks...>", "Hook names to remove")
-  .option("--cwd <path>", "Working directory", ".")
-  .option("-y, --yes", "Skip confirmation prompts", false)
-  .option("--dry-run", "Preview changes without removing files", false)
-  .action(withErrorHandler(async (hookNames: string[], opts) => {
-    const cwd = resolve(opts.cwd);
-    let isInstalledCheck: ((name: string) => boolean) | undefined;
-
-    await runRemoveWorkflow({
-      cwd,
-      names: hookNames,
-      yes: Boolean(opts.yes),
-      dryRun: Boolean(opts.dryRun),
-      itemPlural: "hooks",
-      requireConfig,
-      validateNames: validateHooks,
+export const removeCommand = createRemoveCommand({
+  itemPlural: "hooks",
+  requireConfig,
+  validateNames: validateHooks,
+  getAllItems: getAllHooks,
+  getItemOrThrow: getHookOrThrow,
+  getItemName: (item) => item.name,
+  isInstalled: ({ cwd, config, item }) => {
+    const checker = createHookInstallChecker(cwd, config.hooksFsPath);
+    return checker(item.name);
+  },
+  resolveFilesForItem: ({ cwd, config, item }) =>
+    item.files.map((file) => ({
+      absolutePath: resolve(cwd, config.hooksFsPath, getRelativePath(file)),
+    })),
+  resolveAllowedBaseDirs: ({ cwd, config }) => [resolve(cwd, config.hooksFsPath)],
+  updateManifest: ({ cwd, removedNames }) => {
+    updateManifest(cwd, undefined, removedNames);
+  },
+  findOrphanedDeps: ({ removedNames, cwd, config }) => {
+    const checker = createHookInstallChecker(cwd, config.hooksFsPath);
+    return findOrphanedNpmDeps({
+      removedNames,
       getAllItems: getAllHooks,
-      getItemOrThrow: getHookOrThrow,
-      getItemName: (item) => item.name,
-      isInstalled: ({ config, item }) => {
-        isInstalledCheck ??= createHookInstallChecker(cwd, config.hooksFsPath);
-        return isInstalledCheck(item.name);
-      },
-      resolveFilesForItem: ({ cwd, config, item }) =>
-        item.files.map((file) => ({
-          absolutePath: resolve(cwd, config.hooksFsPath, getRelativePath(file)),
-        })),
-      resolveAllowedBaseDirs: ({ cwd, config }) => [resolve(cwd, config.hooksFsPath)],
-      updateManifest: ({ cwd, removedNames }) => {
-        updateManifest(cwd, undefined, removedNames);
-      },
-      findOrphanedDeps: ({ removedNames, config }) => {
-        isInstalledCheck ??= createHookInstallChecker(cwd, config.hooksFsPath);
-        return findOrphanedNpmDeps({
-          removedNames,
-          getAllItems: getAllHooks,
-          getItemName: (h) => h.name,
-          getItemDeps: (h) => h.dependencies,
-          isInstalled: (h) => isInstalledCheck!(h.name),
-        });
-      },
+      getItemName: (h) => h.name,
+      getItemDeps: (h) => h.dependencies,
+      isInstalled: (h) => checker(h.name),
     });
-  }));
+  },
+});

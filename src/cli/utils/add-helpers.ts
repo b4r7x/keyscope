@@ -9,14 +9,11 @@ export function parseMode(raw: unknown): AddMode {
 
 export function applyModeDeps(deps: string[], mode: AddMode, keyscopeVersionSpec: string): string[] {
   const depSet = new Set(deps.filter((dep) => !dep.startsWith("keyscope@")));
-
-  if (mode === "copy") {
-    depSet.delete("keyscope");
-    return [...depSet];
-  }
-
   depSet.delete("keyscope");
-  depSet.add(keyscopeVersionSpec === "latest" ? "keyscope" : `keyscope@${keyscopeVersionSpec}`);
+
+  if (mode === "package") {
+    depSet.add(keyscopeVersionSpec === "latest" ? "keyscope" : `keyscope@${keyscopeVersionSpec}`);
+  }
 
   return [...depSet];
 }
