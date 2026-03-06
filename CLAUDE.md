@@ -62,7 +62,8 @@ registry/
 scripts/
 │   ├── bundle-registry.ts       # bundle registry for CLI
 │   ├── copy-generated.ts        # copy to dist/
-│   └── build-publish-artifacts.mjs  # build docs/registry artifacts
+│   ├── build-shadcn-registry.ts # build shadcn public registry
+│   └── build-publish-artifacts.ts   # build docs/registry artifacts
 docs/
 │   ├── content/                 # MDX documentation
 │   └── assets/                  # images, SVGs

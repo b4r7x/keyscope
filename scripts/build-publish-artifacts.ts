@@ -1,4 +1,3 @@
-import { execSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -19,11 +18,7 @@ const INPUTS = [
   "package.json",
 ];
 
-function main() {
-  // Generate enriched hook data (docs/generated/) before building artifacts
-  console.log("[keyscope] generating enriched hook data...");
-  execSync("node --import tsx scripts/build-docs-data.ts", { cwd: ROOT, stdio: "inherit" });
-
+function main(): void {
   const manifest = createArtifactManifest({
     rootDir: ROOT,
     library: "keyscope",

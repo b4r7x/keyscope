@@ -25,11 +25,7 @@ export const removeCommand = new Command("remove")
   .option("--dry-run", "Preview changes without removing files", false)
   .action(withErrorHandler(async (hookNames: string[], opts) => {
     const cwd = resolve(opts.cwd);
-    let isInstalledHook: ((name: string) => boolean) | undefined;
-    const getInstallChecker = (hooksFsPath: string): ((name: string) => boolean) => {
-      isInstalledHook ??= createHookInstallChecker(cwd, hooksFsPath);
-      return isInstalledHook;
-    };
+    let isInstalledCheck: ((name: string) => boolean) | undefined;
 
     await runRemoveWorkflow({
       cwd,
@@ -42,8 +38,10 @@ export const removeCommand = new Command("remove")
       getAllItems: getAllHooks,
       getItemOrThrow: getHookOrThrow,
       getItemName: (item) => item.name,
-      isInstalled: ({ config, item }) =>
-        getInstallChecker(config.hooksFsPath)(item.name),
+      isInstalled: ({ config, item }) => {
+        isInstalledCheck ??= createHookInstallChecker(cwd, config.hooksFsPath);
+        return isInstalledCheck(item.name);
+      },
       resolveFilesForItem: ({ cwd, config, item }) =>
         item.files.map((file) => ({
           absolutePath: resolve(cwd, config.hooksFsPath, getRelativePath(file)),
@@ -52,13 +50,15 @@ export const removeCommand = new Command("remove")
       updateManifest: ({ cwd, removedNames }) => {
         updateManifest(cwd, undefined, removedNames);
       },
-      findOrphanedDeps: ({ removedNames, config }) =>
-        findOrphanedNpmDeps({
+      findOrphanedDeps: ({ removedNames, config }) => {
+        isInstalledCheck ??= createHookInstallChecker(cwd, config.hooksFsPath);
+        return findOrphanedNpmDeps({
           removedNames,
           getAllItems: getAllHooks,
           getItemName: (h) => h.name,
           getItemDeps: (h) => h.dependencies,
-          isInstalled: (h) => getInstallChecker(config.hooksFsPath)(h.name),
-        }),
+          isInstalled: (h) => isInstalledCheck!(h.name),
+        });
+      },
     });
   }));

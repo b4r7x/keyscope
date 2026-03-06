@@ -30,9 +30,9 @@
   },
   "scripts": {
     "prebuild": "node --import tsx scripts/bundle-registry.ts",
-    "build": "rm -rf dist && tsc && node --import tsx scripts/copy-generated.ts && node scripts/build-publish-artifacts.mjs",
-    "build:shadcn": "node scripts/build-shadcn-registry.mjs",
-    "build:artifacts": "node scripts/build-publish-artifacts.mjs",
+    "build": "rm -rf dist && tsc && node --import tsx scripts/copy-generated.ts && pnpm build:artifacts",
+    "build:shadcn": "node --import tsx scripts/build-shadcn-registry.ts",
+    "build:artifacts": "pnpm build:docs-data && node --import tsx scripts/build-publish-artifacts.ts",
     "build:docs-data": "tsx scripts/build-docs-data.ts",
     "dev": "tsc --watch",
     "type-check": "tsc --noEmit",
