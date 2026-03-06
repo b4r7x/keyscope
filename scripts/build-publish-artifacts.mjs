@@ -1,9 +1,10 @@
 import { execSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   buildRegistryArtifacts,
+  createArtifactManifest,
 } from "@b4r7x/registry-kit";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -22,13 +23,10 @@ function main() {
   // Generate enriched hook data (docs/generated/) before building artifacts
   console.log("[keyscope] generating enriched hook data...");
   execSync("node --import tsx scripts/build-docs-data.ts", { cwd: ROOT, stdio: "inherit" });
-  const pkg = JSON.parse(readFileSync(resolve(ROOT, "package.json"), "utf-8"));
-  const manifest = {
-    schemaVersion: 1,
+
+  const manifest = createArtifactManifest({
+    rootDir: ROOT,
     library: "keyscope",
-    package: pkg.name ?? "keyscope",
-    version: pkg.version ?? "0.0.0",
-    artifactRoot: "dist/artifacts",
     inputs: INPUTS,
     docs: {
       contentDir: "docs",
@@ -50,11 +48,7 @@ function main() {
       hookList: "generated/hook-list.json",
       hooksDir: "generated/hooks",
     },
-    integrity: {
-      algorithm: "sha256",
-      fingerprintFile: "fingerprint.sha256",
-    },
-  };
+  });
 
   const copyDirs = [
     { from: "docs/content", to: "docs" },
@@ -71,7 +65,6 @@ function main() {
 
   const result = buildRegistryArtifacts({
     rootDir: ROOT,
-    inputs: INPUTS,
     manifest,
     defaultOrigin: "https://diffgazer.com",
     ensurePublicRegistry: {
