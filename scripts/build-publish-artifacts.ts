@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import {
   buildRegistryArtifacts,
   createArtifactManifest,
+  DEFAULT_REGISTRY_ORIGIN,
 } from "@b4r7x/registry-kit";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -61,7 +62,7 @@ function main(): void {
   const result = buildRegistryArtifacts({
     rootDir: ROOT,
     manifest,
-    defaultOrigin: "https://diffgazer.com",
+    defaultOrigin: DEFAULT_REGISTRY_ORIGIN,
     ensurePublicRegistry: {
       fixCommand: "pnpm --dir keyscope build:shadcn",
       label: "keyscope public registry index",
