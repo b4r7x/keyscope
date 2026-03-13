@@ -26,6 +26,9 @@ export interface UseNavigationOptions {
   downKeys?: string[];
   orientation?: "vertical" | "horizontal";
   skipDisabled?: boolean;
+  /** When true, calls el.focus() on navigation and skips Enter/Space handling.
+   *  Use for natively focusable elements (buttons) that handle their own activation via onClick. */
+  moveFocus?: boolean;
 }
 
 export interface UseNavigationReturn {
@@ -82,6 +85,7 @@ export function useNavigationCore({
   onBoundaryReached,
   initialValue = null,
   skipDisabled = true,
+  moveFocus = false,
 }: UseNavigationOptions): UseNavigationCoreReturn {
   const [internalValue, setInternalValue] = useState<string | null>(initialValue);
   const isControlled = value !== undefined;
@@ -119,16 +123,25 @@ export function useNavigationCore({
       const el = elements[index];
       if (el?.dataset.value) {
         el.scrollIntoView?.({ block: "nearest" });
+        if (moveFocus) el.focus();
         setFocusedValue(el.dataset.value);
       }
     },
-    [getElements, setFocusedValue],
+    [getElements, setFocusedValue, moveFocus],
   );
 
   const move = useCallback(
     (delta: 1 | -1) => {
       const elements = getElements();
-      if (elements.length === 0) return;
+      if (elements.length === 0) {
+        if ((globalThis as Record<string, any>).process?.env?.NODE_ENV !== "production") {
+          console.warn(
+            `[useNavigation] No elements found matching [role="${role}"]. ` +
+            `Ensure each navigable element has an explicit role="${role}" attribute.`,
+          );
+        }
+        return;
+      }
 
       const current = getFocusedIndex();
       const rawNext = current + delta;
@@ -140,7 +153,7 @@ export function useNavigationCore({
 
       focusIndex(next);
     },
-    [getElements, getFocusedIndex, wrap, onBoundaryReached, focusIndex],
+    [getElements, getFocusedIndex, wrap, onBoundaryReached, focusIndex, role],
   );
 
   const handleSelect = useCallback(
@@ -191,7 +204,7 @@ export function useNavigation(options: UseNavigationOptions): UseNavigationRetur
 
       const key = event.key;
       const isMoveKey = resolvedUpKeys.includes(key) || resolvedDownKeys.includes(key);
-      const isSpecialKey = key === "Home" || key === "End" || key === "Enter" || key === " ";
+      const isSpecialKey = key === "Home" || key === "End" || (!options.moveFocus && (key === "Enter" || key === " "));
       if (!isMoveKey && !isSpecialKey) return;
 
       if (preventDefault) event.preventDefault();
@@ -212,7 +225,7 @@ export function useNavigation(options: UseNavigationOptions): UseNavigationRetur
         case " ": handleSelect(nativeEvent); return;
       }
     },
-    [enabled, preventDefault, resolvedUpKeys, resolvedDownKeys, move, focusIndex, getElements, handleSelect, handleEnter],
+    [enabled, preventDefault, options.moveFocus, resolvedUpKeys, resolvedDownKeys, move, focusIndex, getElements, handleSelect, handleEnter],
   );
 
   return { highlighted, isHighlighted, highlight, onKeyDown };

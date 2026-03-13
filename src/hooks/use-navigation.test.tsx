@@ -305,4 +305,114 @@ describe("useNavigation", () => {
       expect(getFocused()).toBe("cancel");
     });
   });
+
+  describe("moveFocus", () => {
+    function MoveFocusList({
+      onSelect,
+      onEnter,
+    }: {
+      onSelect?: (value: string, event: globalThis.KeyboardEvent) => void;
+      onEnter?: (value: string, event: globalThis.KeyboardEvent) => void;
+    }) {
+      const ref = useRef<HTMLDivElement>(null);
+      const result = useNavigation({
+        containerRef: ref,
+        role: "button",
+        initialValue: "a",
+        moveFocus: true,
+        onSelect,
+        onEnter,
+      });
+
+      return (
+        <div
+          ref={ref}
+          data-testid="list"
+          onKeyDown={result.onKeyDown as unknown as React.KeyboardEventHandler}
+        >
+          <button role="button" data-value="a" data-testid="btn-a">A</button>
+          <button role="button" data-value="b" data-testid="btn-b">B</button>
+          <button role="button" data-value="c" data-testid="btn-c">C</button>
+          <span data-testid="focused">{result.highlighted ?? ""}</span>
+        </div>
+      );
+    }
+
+    it("calls el.focus() on arrow navigation", () => {
+      render(<MoveFocusList />);
+
+      const container = screen.getByTestId("list");
+      const btnB = screen.getByTestId("btn-b");
+      const focusSpy = vi.spyOn(btnB, "focus");
+
+      act(() => fireKeyOnElement(container, "ArrowDown"));
+      expect(getFocused()).toBe("b");
+      expect(focusSpy).toHaveBeenCalled();
+    });
+
+    it("does not call onSelect on Space", () => {
+      const onSelect = vi.fn();
+      render(<MoveFocusList onSelect={onSelect} />);
+
+      const container = screen.getByTestId("list");
+      act(() => fireKeyOnElement(container, " "));
+      expect(onSelect).not.toHaveBeenCalled();
+    });
+
+    it("does not call onEnter on Enter", () => {
+      const onEnter = vi.fn();
+      render(<MoveFocusList onEnter={onEnter} />);
+
+      const container = screen.getByTestId("list");
+      act(() => fireKeyOnElement(container, "Enter"));
+      expect(onEnter).not.toHaveBeenCalled();
+    });
+
+    it("still handles Home/End", () => {
+      render(<MoveFocusList />);
+
+      const container = screen.getByTestId("list");
+      act(() => fireKeyOnElement(container, "End"));
+      expect(getFocused()).toBe("c");
+
+      act(() => fireKeyOnElement(container, "Home"));
+      expect(getFocused()).toBe("a");
+    });
+  });
+
+  describe("dev warning", () => {
+    it("warns when no elements match role selector", () => {
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      function EmptyList() {
+        const ref = useRef<HTMLDivElement>(null);
+        const result = useNavigation({
+          containerRef: ref,
+          role: "option",
+          initialValue: "a",
+        });
+
+        return (
+          <div
+            ref={ref}
+            data-testid="list"
+            onKeyDown={result.onKeyDown as unknown as React.KeyboardEventHandler}
+          >
+            {/* No elements with role="option" */}
+            <span data-testid="focused">{result.highlighted ?? ""}</span>
+          </div>
+        );
+      }
+
+      render(<EmptyList />);
+      const container = screen.getByTestId("list");
+      act(() => fireKeyOnElement(container, "ArrowDown"));
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[role="option"]'),
+      );
+
+      warnSpy.mockRestore();
+    });
+  });
 });
