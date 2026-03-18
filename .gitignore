@@ -6,3 +6,8 @@ public/r/
 examples/playground/dist/
 src/cli/generated/
 docs/generated/
+
+# spec-kit — only constitution and specs are tracked
+.specify/scripts/
+.specify/templates/
+.specify/init-options.json
