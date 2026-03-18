@@ -22,11 +22,16 @@ interface UseFocusZoneOptions<T extends string> {
   enabled?: boolean;
 }
 
+export interface ZoneProps {
+  "data-focused": true | undefined;
+}
+
 interface UseFocusZoneReturn<T extends string> {
   zone: T;
   setZone: (zone: T) => void;
   inZone: (...zones: T[]) => boolean;
   forZone: (target: T, extra?: UseKeyOptions) => UseKeyOptions;
+  zoneProps: (target: T) => ZoneProps;
 }
 
 const ARROW_KEYS = [
@@ -107,6 +112,9 @@ export function useFocusZone<T extends string>(
     forZone: (target: T, extra?: UseKeyOptions): UseKeyOptions => ({
       ...extra,
       enabled: safeZone === target && (extra?.enabled ?? true),
+    }),
+    zoneProps: (target: T): ZoneProps => ({
+      "data-focused": safeZone === target || undefined,
     }),
   };
 }

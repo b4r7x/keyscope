@@ -366,6 +366,29 @@ describe("useFocusZone", () => {
 
   });
 
+  describe("zoneProps helper", () => {
+    it("returns data-focused true for active zone", () => {
+      const { result } = renderHook(
+        () => useFocusZone({ initial: "main", zones: ["main", "sidebar"] }),
+        { wrapper },
+      );
+
+      expect(result.current.zoneProps("main")).toEqual({ "data-focused": true });
+      expect(result.current.zoneProps("sidebar")).toEqual({ "data-focused": undefined });
+    });
+
+    it("updates when zone changes", () => {
+      const { result } = renderHook(
+        () => useFocusZone({ initial: "main", zones: ["main", "sidebar"] }),
+        { wrapper },
+      );
+
+      act(() => result.current.setZone("sidebar"));
+      expect(result.current.zoneProps("main")).toEqual({ "data-focused": undefined });
+      expect(result.current.zoneProps("sidebar")).toEqual({ "data-focused": true });
+    });
+  });
+
   describe("edge cases", () => {
     it("falls back to first zone when initial is invalid", () => {
       vi.spyOn(console, "error").mockImplementation(() => {});

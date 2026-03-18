@@ -109,6 +109,13 @@ export const useFocusZoneDoc: HookDoc = {
         description:
           "Returns UseKeyOptions scoped to a specific zone, merging with optional extra options.",
       },
+      {
+        name: "zoneProps",
+        type: '(target: T) => { "data-focused": true | undefined }',
+        required: true,
+        description:
+          "Returns DOM attributes for a zone's container element. Sets data-focused when the zone is active.",
+      },
     ],
   },
   notes: [
