@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import { renderHook, cleanup, act } from "@testing-library/react";
 import { useRef, type RefObject } from "react";
-import { useFocusTrap } from "./use-focus-trap";
+import { useFocusTrap } from "../use-focus-trap";
 
 function createContainer(...focusableHTML: string[]) {
   const container = document.createElement("div");

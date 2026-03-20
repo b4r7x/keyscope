@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { renderHook, cleanup } from "@testing-library/react";
 import { type ReactNode } from "react";
-import { KeyboardProvider } from "../providers/keyboard-provider";
-import { useKey } from "./use-key";
+import { KeyboardProvider } from "../../providers/keyboard-provider";
+import { useKey } from "../use-key";
 
 function wrapper({ children }: { children: ReactNode }) {
   return <KeyboardProvider>{children}</KeyboardProvider>;

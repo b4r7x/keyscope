@@ -2,7 +2,6 @@
 
 import {
   useState,
-  useCallback,
   type RefObject,
   type KeyboardEvent,
 } from "react";
@@ -83,90 +82,72 @@ export function useNavigationCore({
   const isControlled = value !== undefined;
   const highlighted = isControlled ? value ?? null : internalValue;
 
-  const setFocusedValue = useCallback(
-    (nextValue: string) => {
-      if (isControlled) {
-        onValueChange?.(nextValue);
-      } else {
-        setInternalValue(nextValue);
-        onValueChange?.(nextValue);
-      }
-      onHighlightChange?.(nextValue);
-    },
-    [isControlled, onHighlightChange, onValueChange],
-  );
+  const setFocusedValue = (nextValue: string) => {
+    if (isControlled) {
+      onValueChange?.(nextValue);
+    } else {
+      setInternalValue(nextValue);
+      onValueChange?.(nextValue);
+    }
+    onHighlightChange?.(nextValue);
+  };
 
-  const getElements = useCallback(
-    () => queryElements(containerRef, role, skipDisabled),
-    [containerRef, role, skipDisabled],
-  );
+  const getElements = () => queryElements(containerRef, role, skipDisabled);
 
-  const getFocusedIndex = useCallback((): number => {
+  const getFocusedIndex = (): number => {
     const elements = getElements();
     if (elements.length === 0) return -1;
     if (!highlighted) return 0;
     const index = elements.findIndex((el) => el.dataset.value === highlighted);
     return index >= 0 ? index : 0;
-  }, [getElements, highlighted]);
+  };
 
-  const focusIndex = useCallback(
-    (index: number) => {
-      const elements = getElements();
-      const el = elements[index];
-      if (el?.dataset.value) {
-        el.scrollIntoView?.({ block: "nearest" });
-        if (moveFocus) el.focus();
-        setFocusedValue(el.dataset.value);
+  const focusIndex = (index: number) => {
+    const elements = getElements();
+    const el = elements[index];
+    if (el?.dataset.value) {
+      el.scrollIntoView?.({ block: "nearest" });
+      if (moveFocus) el.focus();
+      setFocusedValue(el.dataset.value);
+    }
+  };
+
+  const move = (delta: 1 | -1) => {
+    const elements = getElements();
+    if (elements.length === 0) {
+      if (process.env.NODE_ENV !== "production") {
+        console.warn(
+          `[useNavigation] No elements found matching [role="${role}"]. ` +
+          `Ensure each navigable element has an explicit role="${role}" attribute.`,
+        );
       }
-    },
-    [getElements, setFocusedValue, moveFocus],
-  );
+      return;
+    }
 
-  const move = useCallback(
-    (delta: 1 | -1) => {
-      const elements = getElements();
-      if (elements.length === 0) {
-        if (process.env.NODE_ENV !== "production") {
-          console.warn(
-            `[useNavigation] No elements found matching [role="${role}"]. ` +
-            `Ensure each navigable element has an explicit role="${role}" attribute.`,
-          );
-        }
-        return;
-      }
+    const current = getFocusedIndex();
+    const rawNext = current + delta;
+    const next = wrapIndex(rawNext, elements.length, wrap);
+    if (next === null) {
+      onBoundaryReached?.(delta < 0 ? "up" : "down");
+      return;
+    }
 
-      const current = getFocusedIndex();
-      const rawNext = current + delta;
-      const next = wrapIndex(rawNext, elements.length, wrap);
-      if (next === null) {
-        onBoundaryReached?.(delta < 0 ? "up" : "down");
-        return;
-      }
+    focusIndex(next);
+  };
 
-      focusIndex(next);
-    },
-    [getElements, getFocusedIndex, wrap, onBoundaryReached, focusIndex, role],
-  );
+  const handleSelect = (event: globalThis.KeyboardEvent) => {
+    if (highlighted) onSelect?.(highlighted, event);
+  };
 
-  const handleSelect = useCallback(
-    (event: globalThis.KeyboardEvent) => {
-      if (highlighted) onSelect?.(highlighted, event);
-    },
-    [highlighted, onSelect],
-  );
+  const handleEnter = (event: globalThis.KeyboardEvent) => {
+    if (highlighted) {
+      if (onEnter) onEnter(highlighted, event);
+      else onSelect?.(highlighted, event);
+    }
+  };
 
-  const handleEnter = useCallback(
-    (event: globalThis.KeyboardEvent) => {
-      if (highlighted) {
-        if (onEnter) onEnter(highlighted, event);
-        else onSelect?.(highlighted, event);
-      }
-    },
-    [highlighted, onEnter, onSelect],
-  );
-
-  const isHighlighted = useCallback((v: string) => highlighted === v, [highlighted]);
-  const highlight = useCallback((v: string) => setFocusedValue(v), [setFocusedValue]);
+  const isHighlighted = (v: string) => highlighted === v;
+  const highlight = (v: string) => setFocusedValue(v);
 
   return { highlighted, isHighlighted, highlight, move, focusIndex, handleSelect, handleEnter, getElements };
 }
@@ -186,35 +167,32 @@ export function useNavigation(options: UseNavigationOptions): UseNavigationRetur
   const { highlighted, isHighlighted, highlight, move, focusIndex, handleSelect, handleEnter, getElements } =
     useNavigationCore(options);
 
-  const onKeyDown = useCallback(
-    (event: KeyboardEvent) => {
-      if (!enabled) return;
+  const onKeyDown = (event: KeyboardEvent) => {
+    if (!enabled) return;
 
-      const key = event.key;
-      const isMoveKey = resolvedUpKeys.includes(key) || resolvedDownKeys.includes(key);
-      const isSpecialKey = key === "Home" || key === "End" || (!options.moveFocus && (key === "Enter" || key === " "));
-      if (!isMoveKey && !isSpecialKey) return;
+    const key = event.key;
+    const isMoveKey = resolvedUpKeys.includes(key) || resolvedDownKeys.includes(key);
+    const isSpecialKey = key === "Home" || key === "End" || (!options.moveFocus && (key === "Enter" || key === " "));
+    if (!isMoveKey && !isSpecialKey) return;
 
-      if (preventDefault) event.preventDefault();
+    if (preventDefault) event.preventDefault();
 
-      const nativeEvent = event.nativeEvent;
+    const nativeEvent = event.nativeEvent;
 
-      if (resolvedUpKeys.includes(key)) { move(-1); return; }
-      if (resolvedDownKeys.includes(key)) { move(1); return; }
+    if (resolvedUpKeys.includes(key)) { move(-1); return; }
+    if (resolvedDownKeys.includes(key)) { move(1); return; }
 
-      switch (key) {
-        case "Home": focusIndex(0); return;
-        case "End": {
-          const elements = getElements();
-          if (elements.length > 0) focusIndex(elements.length - 1);
-          return;
-        }
-        case "Enter": handleEnter(nativeEvent); return;
-        case " ": handleSelect(nativeEvent); return;
+    switch (key) {
+      case "Home": focusIndex(0); return;
+      case "End": {
+        const elements = getElements();
+        if (elements.length > 0) focusIndex(elements.length - 1);
+        return;
       }
-    },
-    [enabled, preventDefault, options.moveFocus, resolvedUpKeys, resolvedDownKeys, move, focusIndex, getElements, handleSelect, handleEnter],
-  );
+      case "Enter": handleEnter(nativeEvent); return;
+      case " ": handleSelect(nativeEvent); return;
+    }
+  };
 
   return { highlighted, isHighlighted, highlight, onKeyDown };
 }

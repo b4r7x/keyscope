@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { renderHook, act, cleanup } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
-import { KeyboardProvider } from "../providers/keyboard-provider";
-import { useFocusZone } from "./use-focus-zone";
-import { useKey } from "./use-key";
+import { KeyboardProvider } from "../../providers/keyboard-provider";
+import { useFocusZone } from "../use-focus-zone";
+import { useKey } from "../use-key";
 
 function wrapper({ children }: { children: ReactNode }) {
   return createElement(KeyboardProvider, null, children);

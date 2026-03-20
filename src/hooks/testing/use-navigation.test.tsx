@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, cleanup, screen, act } from "@testing-library/react";
 import { useRef } from "react";
-import { useNavigation, type UseNavigationOptions } from "./use-navigation";
+import { useNavigation, type UseNavigationOptions } from "../use-navigation";
 
 function TestList({
   items = ["a", "b", "c"],

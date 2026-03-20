@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, cleanup, screen, act } from "@testing-library/react";
 import { useRef, type ReactNode } from "react";
-import { KeyboardProvider } from "../providers/keyboard-provider";
-import { useScopedNavigation, type UseScopedNavigationOptions } from "./use-scoped-navigation";
+import { KeyboardProvider } from "../../providers/keyboard-provider";
+import { useScopedNavigation, type UseScopedNavigationOptions } from "../use-scoped-navigation";
 
 function wrapper({ children }: { children: ReactNode }) {
   return <KeyboardProvider>{children}</KeyboardProvider>;
