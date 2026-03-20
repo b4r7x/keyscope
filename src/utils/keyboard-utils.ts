@@ -24,7 +24,6 @@ export function matchesHotkey(event: KeyboardEvent, hotkey: string): boolean {
   const parts = rawParts.map(p => p.toLowerCase());
   const mods = new Set(parts);
 
-  // Single uppercase letter implies shift (e.g., "G" === "shift+g")
   if (rawKey.length === 1 && rawKey !== rawKey.toLowerCase()) {
     mods.add("shift");
   }

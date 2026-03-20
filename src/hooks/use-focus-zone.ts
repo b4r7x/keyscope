@@ -11,7 +11,7 @@ type ZoneTransition<T extends string> = (params: {
 
 interface UseFocusZoneOptions<T extends string> {
   initial: T;
-  zones: readonly T[];
+  zones: readonly [T, ...T[]];
   zone?: T;
   onZoneChange?: (zone: T) => void;
   onLeaveZone?: (zone: T) => void;
@@ -48,15 +48,13 @@ export function useFocusZone<T extends string>(
 
   const [internalZone, setInternalZone] = useState<T>(initial);
 
-  const isControlled = options.zone !== undefined;
-  const currentZone = isControlled ? options.zone! : internalZone;
+  const currentZone: T = options.zone ?? internalZone;
 
-  // Single helper for ALL zone changes (controlled + uncontrolled)
   const setZoneValue = useEffectEvent((next: T) => {
     if (next === currentZone) return;
     options.onLeaveZone?.(currentZone);
     options.onEnterZone?.(next);
-    if (!isControlled) setInternalZone(next);
+    if (options.zone === undefined) setInternalZone(next);
     options.onZoneChange?.(next);
   });
 
@@ -73,11 +71,11 @@ export function useFocusZone<T extends string>(
     if (!options.tabCycle || options.tabCycle.length === 0) return;
     const cycle = options.tabCycle;
     const idx = cycle.indexOf(currentZone);
-    const next = cycle[(idx + delta + cycle.length) % cycle.length]!;
+    const next = cycle[(idx + delta + cycle.length) % cycle.length] ?? cycle[0];
+    if (!next) return;
     setZoneValue(next);
   });
 
-  // Arrow keys — single useKey call with object overload (no hook-in-loop)
   useKey(
     keys(ARROW_KEYS, (e) => stableTransitions(e.key as typeof ARROW_KEYS[number])),
     { enabled: enabled && options.transitions != null },
@@ -103,7 +101,7 @@ export function useFocusZone<T extends string>(
     }
   }
 
-  const safeZone = zones.includes(currentZone) ? currentZone : zones[0]!;
+  const safeZone = zones.includes(currentZone) ? currentZone : zones[0];
 
   return {
     zone: safeZone,

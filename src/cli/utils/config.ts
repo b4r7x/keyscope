@@ -4,8 +4,7 @@ import {
   loadJsonConfig,
   writeJsonConfig,
   updateManifest as coreUpdateManifest,
-  aliasToFsPath,
-  detectSourceDir,
+  resolveAliasedPaths,
   type ConfigLoadResult,
 } from "@b4r7/cli-core";
 import { CONFIG_FILE } from "../constants.js";
@@ -44,16 +43,15 @@ const DEFAULT_ALIASES = {
 
 export function resolveConfig(raw: KeyscopeConfig, cwd?: string): ResolvedConfig {
   const aliases = { ...DEFAULT_ALIASES, ...raw.aliases };
-
-  let hooksFsPath = raw.hooksFsPath;
-  if (!hooksFsPath) {
-    const sourceDir = cwd ? detectSourceDir(cwd) : ".";
-    hooksFsPath = aliasToFsPath(aliases.hooks, sourceDir);
-  }
+  const resolved = resolveAliasedPaths(
+    { hooks: raw.hooksFsPath },
+    { hooks: aliases.hooks },
+    cwd,
+  );
 
   return {
     aliases,
-    hooksFsPath,
+    hooksFsPath: resolved.hooks,
   };
 }
 

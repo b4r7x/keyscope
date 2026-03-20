@@ -14,27 +14,23 @@ export interface UseKeyOptions {
 
 type KeyHandler = (event: KeyboardEvent) => void;
 
-// Overload 1: Single key + handler
 export function useKey(
   hotkey: string,
   handler: KeyHandler,
   options?: UseKeyOptions,
 ): void;
 
-// Overload 2: Array of keys → same handler
 export function useKey(
   hotkeys: readonly string[],
   handler: KeyHandler,
   options?: UseKeyOptions,
 ): void;
 
-// Overload 3: Key map → different handlers
 export function useKey(
   handlers: Record<string, KeyHandler>,
   options?: UseKeyOptions,
 ): void;
 
-// Implementation
 export function useKey(
   first: string | readonly string[] | Record<string, KeyHandler>,
   second?: KeyHandler | UseKeyOptions,

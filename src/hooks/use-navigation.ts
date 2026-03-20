@@ -26,8 +26,6 @@ export interface UseNavigationOptions {
   downKeys?: string[];
   orientation?: "vertical" | "horizontal";
   skipDisabled?: boolean;
-  /** When true, calls el.focus() on navigation and skips Enter/Space handling.
-   *  Use for natively focusable elements (buttons) that handle their own activation via onClick. */
   moveFocus?: boolean;
 }
 
@@ -38,7 +36,6 @@ export interface UseNavigationReturn {
   onKeyDown: (event: KeyboardEvent) => void;
 }
 
-/** @internal Core return type — includes movement primitives for composition. */
 export interface UseNavigationCoreReturn {
   highlighted: string | null;
   isHighlighted: (value: string) => boolean;
@@ -68,11 +65,6 @@ function wrapIndex(index: number, length: number, wrap: boolean): number | null 
   return index;
 }
 
-/**
- * Core navigation state and movement logic.
- * Used internally by useNavigation and useScopedNavigation.
- * @internal
- */
 export function useNavigationCore({
   containerRef,
   role,
@@ -134,7 +126,7 @@ export function useNavigationCore({
     (delta: 1 | -1) => {
       const elements = getElements();
       if (elements.length === 0) {
-        if ((globalThis as Record<string, any>).process?.env?.NODE_ENV !== "production") {
+        if (process.env.NODE_ENV !== "production") {
           console.warn(
             `[useNavigation] No elements found matching [role="${role}"]. ` +
             `Ensure each navigable element has an explicit role="${role}" attribute.`,
@@ -179,10 +171,6 @@ export function useNavigationCore({
   return { highlighted, isHighlighted, highlight, move, focusIndex, handleSelect, handleEnter, getElements };
 }
 
-/**
- * Standalone keyboard navigation for role-based lists.
- * Returns an onKeyDown handler — no KeyboardProvider required.
- */
 export function useNavigation(options: UseNavigationOptions): UseNavigationReturn {
   const {
     enabled = true,
@@ -209,7 +197,7 @@ export function useNavigation(options: UseNavigationOptions): UseNavigationRetur
 
       if (preventDefault) event.preventDefault();
 
-      const nativeEvent = event.nativeEvent as globalThis.KeyboardEvent;
+      const nativeEvent = event.nativeEvent;
 
       if (resolvedUpKeys.includes(key)) { move(-1); return; }
       if (resolvedDownKeys.includes(key)) { move(1); return; }

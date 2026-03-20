@@ -16,11 +16,6 @@ export interface UseScopedNavigationReturn {
   highlight: (value: string) => void;
 }
 
-/**
- * Scoped keyboard navigation — registers keys via KeyboardProvider.
- * Use when you need scope-aware navigation (e.g., modals, panels).
- * Requires a <KeyboardProvider> ancestor.
- */
 export function useScopedNavigation(options: UseScopedNavigationOptions): UseScopedNavigationReturn {
   const {
     enabled = true,

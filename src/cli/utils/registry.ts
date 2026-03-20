@@ -5,51 +5,33 @@ import {
   RegistryContentFileSchema,
   RegistryContentItemSchema,
   BaseRegistryBundleSchema,
-  resolveRegistryDeps as coreResolveRegistryDeps,
-  collectNpmDeps as coreCollectNpmDeps,
-  getRelativePath as coreGetRelativePath,
   createRegistryLoader,
-  metaField,
+  createRegistryAccessors,
 } from "@b4r7/cli-core";
 import { ITEM_LABEL } from "../constants.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const RegistryBundleSchema = BaseRegistryBundleSchema;
-
 export type RegistryFile = z.infer<typeof RegistryContentFileSchema>;
 export type RegistryItem = z.infer<typeof RegistryContentItemSchema>;
-export type RegistryBundle = z.infer<typeof RegistryBundleSchema>;
-
-const HOOK_ITEM_TYPE = "registry:hook";
-const REGISTRY_HOOKS_PREFIXES = ["registry/hooks/", "src/hooks/"];
+export type RegistryBundle = z.infer<typeof BaseRegistryBundleSchema>;
 
 const getRegistry = createRegistryLoader(
   resolve(__dirname, "../generated/registry-bundle.json"),
-  RegistryBundleSchema,
+  BaseRegistryBundleSchema,
   (bundle) => ({ items: bundle.items }),
 );
 
-export function getRegistryItem(name: string): RegistryItem | undefined {
-  return getRegistry().items.find((item) => item.name === name);
-}
+const accessors = createRegistryAccessors({
+  loader: getRegistry,
+  itemLabel: ITEM_LABEL,
+  pathPrefixes: ["registry/hooks/", "src/hooks/"],
+  itemTypeFilter: "registry:hook",
+});
 
-export function getPublicHooks(): RegistryItem[] {
-  return getAllHooks().filter((item) => !metaField(item, "hidden", false));
-}
-
-export function getAllHooks(): RegistryItem[] {
-  return getRegistry().items.filter((item) => item.type === HOOK_ITEM_TYPE);
-}
-
-export function resolveRegistryDeps(names: string[]): string[] {
-  return coreResolveRegistryDeps(names, getRegistryItem, ITEM_LABEL);
-}
-
-export function getRelativePath(file: Pick<RegistryFile, "path" | "targetPath">): string {
-  return coreGetRelativePath(file, REGISTRY_HOOKS_PREFIXES);
-}
-
-export function collectNpmDeps(names: string[]): string[] {
-  return coreCollectNpmDeps(names, getRegistryItem);
-}
+export const getRegistryItem = accessors.getItem;
+export const getPublicHooks = accessors.getPublicItems;
+export const getAllHooks = accessors.getAllItems;
+export const resolveRegistryDeps = accessors.resolveDeps;
+export const getRelativePath = accessors.relativePath;
+export const collectNpmDeps = accessors.npmDeps;

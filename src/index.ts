@@ -1,13 +1,10 @@
-// Provider
 export { KeyboardProvider } from "./providers/keyboard-provider.js";
 export type { HandlerOptions } from "./providers/keyboard-provider.js";
 
-// Core hooks
 export { useKey } from "./hooks/use-key.js";
 export type { UseKeyOptions } from "./hooks/use-key.js";
 export { useScope } from "./hooks/use-scope.js";
 
-// Navigation hooks
 export { useNavigation } from "./hooks/use-navigation.js";
 export type { UseNavigationOptions, UseNavigationReturn } from "./hooks/use-navigation.js";
 export { useScopedNavigation } from "./hooks/use-scoped-navigation.js";
@@ -15,16 +12,12 @@ export type { UseScopedNavigationOptions, UseScopedNavigationReturn } from "./ho
 export { useFocusZone } from "./hooks/use-focus-zone.js";
 export type { ZoneProps } from "./hooks/use-focus-zone.js";
 
-// DOM hooks
 export { useFocusTrap } from "./hooks/use-focus-trap.js";
 export type { UseFocusTrapOptions } from "./hooks/use-focus-trap.js";
 export { useScrollLock } from "./hooks/use-scroll-lock.js";
 
-// Utilities
 export { keys } from "./utils/keys.js";
 
-// Context
 export { useOptionalKeyboardContext } from "./context/keyboard-context.js";
 
-// Types
 export type { NavigationRole } from "./hooks/use-navigation.js";
