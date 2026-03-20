@@ -226,9 +226,7 @@ describe("useFocusZone", () => {
 
       renderHook(
         () => {
-          // Register handler in the default global scope
           useKey("x", handler);
-          // useFocusZone WITHOUT scope should NOT push a new scope
           useFocusZone({
             initial: "main",
             zones: ["main", "sidebar"],
@@ -237,8 +235,6 @@ describe("useFocusZone", () => {
         { wrapper },
       );
 
-      // If no scope was pushed, the global scope is still active,
-      // so the handler registered in the global scope should fire.
       act(() => fireKey("x"));
       expect(handler).toHaveBeenCalledOnce();
     });
@@ -255,17 +251,12 @@ describe("useFocusZone", () => {
             zones: ["main"],
             scope: "review",
           });
-          // This handler is in "review" scope pushed by useFocusZone
           useKey("Escape", insideHandler);
         },
         { wrapper },
       );
 
-      // When scope is active, only the scoped handler should fire.
-      // The provider only dispatches to the active scope.
       act(() => fireKey("Escape"));
-      // The "review" scope is the active scope (pushed last), so the
-      // Escape handler registered after the scope push fires.
       expect(insideHandler).toHaveBeenCalledOnce();
     });
   });
@@ -354,11 +345,9 @@ describe("useFocusZone", () => {
         { wrapper },
       );
 
-      // Zone is "main", forZone("sidebar") → enabled: false
       act(() => fireKey("Enter"));
       expect(handler).not.toHaveBeenCalled();
 
-      // Switch to "sidebar" → forZone("sidebar") → enabled: true
       act(() => result.current.setZone("sidebar"));
       act(() => fireKey("Enter"));
       expect(handler).toHaveBeenCalledOnce();
@@ -386,6 +375,35 @@ describe("useFocusZone", () => {
       act(() => result.current.setZone("sidebar"));
       expect(result.current.zoneProps("main")).toEqual({ "data-focused": undefined });
       expect(result.current.zoneProps("sidebar")).toEqual({ "data-focused": true });
+    });
+  });
+
+  describe("inZone helper", () => {
+    it("returns true for the current zone and false for others", () => {
+      const { result } = renderHook(
+        () => useFocusZone({ initial: "main", zones: ["main", "sidebar", "footer"] }),
+        { wrapper },
+      );
+
+      expect(result.current.inZone("main")).toBe(true);
+      expect(result.current.inZone("sidebar")).toBe(false);
+      expect(result.current.inZone("footer")).toBe(false);
+
+      act(() => result.current.setZone("sidebar"));
+
+      expect(result.current.inZone("main")).toBe(false);
+      expect(result.current.inZone("sidebar")).toBe(true);
+      expect(result.current.inZone("footer")).toBe(false);
+    });
+
+    it("returns true when current zone matches any of the arguments", () => {
+      const { result } = renderHook(
+        () => useFocusZone({ initial: "main", zones: ["main", "sidebar", "footer"] }),
+        { wrapper },
+      );
+
+      expect(result.current.inZone("main", "sidebar")).toBe(true);
+      expect(result.current.inZone("sidebar", "footer")).toBe(false);
     });
   });
 

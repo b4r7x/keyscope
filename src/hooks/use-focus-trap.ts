@@ -64,5 +64,5 @@ export function useFocusTrap(
         previousFocus?.focus();
       }
     };
-  }, [enabled, restoreFocus, containerRef, initialFocus]);
+  }, [enabled, restoreFocus]);
 }

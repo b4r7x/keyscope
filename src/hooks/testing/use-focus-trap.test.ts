@@ -132,7 +132,6 @@ describe("useFocusTrap", () => {
       );
       renderTrap(container);
 
-      // Add a new button dynamically
       container.insertAdjacentHTML("beforeend", '<button id="c">C</button>');
 
       const newLast = container.querySelector<HTMLElement>("#c")!;
@@ -190,7 +189,6 @@ describe("useFocusTrap", () => {
       container = createContainer('<button id="a">A</button>');
       renderTrap(container, { enabled: false });
 
-      // Focus should NOT have moved to container
       expect(document.activeElement).toBe(outsideButton);
 
       outsideButton.remove();
@@ -221,7 +219,6 @@ describe("useFocusTrap", () => {
 
       expect(document.activeElement).toBe(container);
 
-      // Should not throw
       const event = fireTab();
       expect(event.defaultPrevented).toBe(false);
     });

@@ -1,10 +1,9 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, cleanup, act } from "@testing-library/react";
+import { render, renderHook, cleanup, act } from "@testing-library/react";
 import { useEffect, type ReactNode } from "react";
 import { KeyboardProvider } from "../../providers/keyboard-provider";
 import { useKeyboardContext } from "../../context/keyboard-context";
 import { useScope } from "../use-scope";
-import { renderHook } from "@testing-library/react";
 
 function Wrapper({ children }: { children: ReactNode }) {
   return <KeyboardProvider>{children}</KeyboardProvider>;
@@ -33,8 +32,9 @@ describe("useScope", () => {
       const { register } = useKeyboardContext();
       useScope("modal");
       useEffect(() => {
-        register("global", "Escape", globalHandler);
-        register("modal", "Escape", modalHandler);
+        const c1 = register("global", "Escape", globalHandler);
+        const c2 = register("modal", "Escape", modalHandler);
+        return () => { c1(); c2(); };
       }, []);
       return <div>consumer</div>;
     }
@@ -96,8 +96,9 @@ describe("useScope", () => {
       const { register } = useKeyboardContext();
       useScope("modal", { enabled: false });
       useEffect(() => {
-        register("global", "Escape", globalHandler);
-        register("modal", "Escape", modalHandler);
+        const c1 = register("global", "Escape", globalHandler);
+        const c2 = register("modal", "Escape", modalHandler);
+        return () => { c1(); c2(); };
       }, []);
       return <div>consumer</div>;
     }

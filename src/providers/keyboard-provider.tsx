@@ -69,8 +69,7 @@ export function KeyboardProvider({ children }: { children: ReactNode }) {
       for (const [hotkey, entries] of scopeHandlers) {
         if (matchesHotkey(event, hotkey)) {
           for (let idx = entries.length - 1; idx >= 0; idx -= 1) {
-            const entry = entries[idx];
-            if (!entry) continue;
+            const entry = entries[idx]!;
             if (isInput && !entry.options?.allowInInput) continue;
             if (!isWithinTarget(event.target, entry.options)) continue;
 
@@ -94,8 +93,9 @@ export function KeyboardProvider({ children }: { children: ReactNode }) {
   }, [activeScope]);
 
   const register = useCallback((scope: string, hotkey: string, handler: Handler, options?: HandlerOptions) => {
-    const scopeHandlers = handlers.current.get(scope) ?? new Map<string, HandlerEntry[]>();
-    if (!handlers.current.has(scope)) {
+    let scopeHandlers = handlers.current.get(scope);
+    if (!scopeHandlers) {
+      scopeHandlers = new Map<string, HandlerEntry[]>();
       handlers.current.set(scope, scopeHandlers);
     }
 

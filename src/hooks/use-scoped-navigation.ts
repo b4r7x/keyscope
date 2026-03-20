@@ -67,4 +67,3 @@ export function useScopedNavigation(options: UseScopedNavigationOptions): UseSco
 
   return { highlighted, isHighlighted, highlight };
 }
-

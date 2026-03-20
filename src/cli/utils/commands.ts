@@ -23,7 +23,7 @@ export function createHookInstallChecker(cwd: string, hooksFsPath: string): (nam
   return createInstallChecker({
     getManifest: () => getManifestHooks(cwd),
     getItem: getRegistryItem,
-    getRelativePath: (file) => getRelativePath(file),
+    getRelativePath,
     installDir: resolve(cwd, hooksFsPath),
     extensions: [],
   });

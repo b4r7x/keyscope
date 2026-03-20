@@ -16,9 +16,7 @@ export function normalizeKeyInput<O>(
   if (Array.isArray(first)) {
     const handler = second as KeyHandler;
     return {
-      handlerMap: Object.fromEntries(
-        (first as readonly string[]).map((k) => [k, handler]),
-      ),
+      handlerMap: Object.fromEntries(first.map((k) => [k, handler])),
       options: third,
     };
   }

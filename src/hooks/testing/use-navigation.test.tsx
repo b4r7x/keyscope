@@ -1,7 +1,11 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, cleanup, screen, act } from "@testing-library/react";
-import { useRef } from "react";
+import { useRef, type KeyboardEventHandler } from "react";
 import { useNavigation, type UseNavigationOptions } from "../use-navigation";
+
+function onKeyDownProp(fn: (e: globalThis.KeyboardEvent) => void): KeyboardEventHandler {
+  return fn as unknown as KeyboardEventHandler;
+}
 
 function TestList({
   items = ["a", "b", "c"],
@@ -18,7 +22,7 @@ function TestList({
     <div
       ref={ref}
       data-testid="list"
-      onKeyDown={result.onKeyDown as unknown as React.KeyboardEventHandler}
+      onKeyDown={onKeyDownProp(result.onKeyDown)}
     >
       {items.map((item) => (
         <div key={item} role="option" data-value={item} data-testid={`item-${item}`} />
@@ -240,7 +244,7 @@ describe("useNavigation", () => {
         <div
           ref={ref}
           data-testid="list"
-          onKeyDown={result.onKeyDown as unknown as React.KeyboardEventHandler}
+          onKeyDown={onKeyDownProp(result.onKeyDown)}
         >
           <div role="option" data-value="a" />
           <div role="option" data-value="b" aria-disabled="true" />
@@ -281,7 +285,7 @@ describe("useNavigation", () => {
         <div
           ref={ref}
           data-testid="list"
-          onKeyDown={result.onKeyDown as unknown as React.KeyboardEventHandler}
+          onKeyDown={onKeyDownProp(result.onKeyDown)}
         >
           <div role="button" data-value="save" />
           <div role="button" data-value="cancel" />
@@ -328,7 +332,7 @@ describe("useNavigation", () => {
         <div
           ref={ref}
           data-testid="list"
-          onKeyDown={result.onKeyDown as unknown as React.KeyboardEventHandler}
+          onKeyDown={onKeyDownProp(result.onKeyDown)}
         >
           <button role="button" data-value="a" data-testid="btn-a">A</button>
           <button role="button" data-value="b" data-testid="btn-b">B</button>
@@ -338,16 +342,15 @@ describe("useNavigation", () => {
       );
     }
 
-    it("calls el.focus() on arrow navigation", () => {
+    it("moves DOM focus on arrow navigation", () => {
       render(<MoveFocusList />);
 
       const container = screen.getByTestId("list");
       const btnB = screen.getByTestId("btn-b");
-      const focusSpy = vi.spyOn(btnB, "focus");
 
       act(() => fireKeyOnElement(container, "ArrowDown"));
       expect(getFocused()).toBe("b");
-      expect(focusSpy).toHaveBeenCalled();
+      expect(document.activeElement).toBe(btnB);
     });
 
     it("does not call onSelect on Space", () => {
@@ -380,6 +383,49 @@ describe("useNavigation", () => {
     });
   });
 
+  describe("highlight() method", () => {
+    function HighlightTestList() {
+      const ref = useRef<HTMLDivElement>(null);
+      const result = useNavigation({
+        containerRef: ref,
+        role: "option",
+        initialValue: "a",
+      });
+
+      return (
+        <div ref={ref} data-testid="list">
+          <div role="option" data-value="a" />
+          <div role="option" data-value="b" />
+          <div role="option" data-value="c" />
+          <span data-testid="focused">{result.highlighted ?? ""}</span>
+          <span data-testid="is-a">{String(result.isHighlighted("a"))}</span>
+          <span data-testid="is-b">{String(result.isHighlighted("b"))}</span>
+          <button data-testid="highlight-b" onClick={() => result.highlight("b")} />
+        </div>
+      );
+    }
+
+    it("highlight() sets highlighted to the given value", () => {
+      render(<HighlightTestList />);
+      expect(getFocused()).toBe("a");
+
+      act(() => screen.getByTestId("highlight-b").click());
+      expect(getFocused()).toBe("b");
+    });
+
+    it("isHighlighted() returns true for the highlighted value and false otherwise", () => {
+      render(<HighlightTestList />);
+
+      expect(screen.getByTestId("is-a").textContent).toBe("true");
+      expect(screen.getByTestId("is-b").textContent).toBe("false");
+
+      act(() => screen.getByTestId("highlight-b").click());
+
+      expect(screen.getByTestId("is-a").textContent).toBe("false");
+      expect(screen.getByTestId("is-b").textContent).toBe("true");
+    });
+  });
+
   describe("dev warning", () => {
     it("warns when no elements match role selector", () => {
       const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
@@ -396,7 +442,7 @@ describe("useNavigation", () => {
           <div
             ref={ref}
             data-testid="list"
-            onKeyDown={result.onKeyDown as unknown as React.KeyboardEventHandler}
+            onKeyDown={onKeyDownProp(result.onKeyDown)}
           >
             {/* No elements with role="option" */}
             <span data-testid="focused">{result.highlighted ?? ""}</span>

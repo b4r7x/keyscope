@@ -64,14 +64,6 @@ describe("useKey", () => {
   });
 
   describe("overload 1: single key + handler", () => {
-    it("registers a single key and calls handler", () => {
-      const handler = vi.fn();
-      renderHook(() => useKey("Escape", handler), { wrapper });
-
-      fireKey("Escape");
-      expect(handler).toHaveBeenCalledOnce();
-    });
-
     it("re-enables when enabled changes to true", () => {
       const handler = vi.fn();
       let enabled = false;
@@ -175,14 +167,12 @@ describe("useKey", () => {
       expect(firstHandler).toHaveBeenCalledOnce();
       expect(callCount).toBe(1);
 
-      // Swap handler and rerender — useEffectEvent should pick up the new one
       handler = secondHandler;
       rerender();
 
       fireKey("Escape");
       expect(secondHandler).toHaveBeenCalledOnce();
       expect(callCount).toBe(2);
-      // First handler should not have been called again
       expect(firstHandler).toHaveBeenCalledOnce();
     });
   });

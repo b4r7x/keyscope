@@ -48,18 +48,14 @@ export function useKey(
 
   const keysKey = Object.keys(handlerMap).sort().join(",");
 
-  const handlerOptions: HandlerOptions | undefined =
-    options?.allowInInput !== undefined ||
-    options?.targetRef !== undefined ||
-    options?.requireFocusWithin !== undefined ||
-    options?.preventDefault !== undefined
-      ? {
-          allowInInput: options?.allowInInput,
-          targetRef: options?.targetRef,
-          requireFocusWithin: options?.requireFocusWithin,
-          preventDefault: options?.preventDefault,
-        }
-      : undefined;
+  const handlerOptions: HandlerOptions | undefined = options
+    ? {
+        allowInInput: options.allowInInput,
+        targetRef: options.targetRef,
+        requireFocusWithin: options.requireFocusWithin,
+        preventDefault: options.preventDefault,
+      }
+    : undefined;
 
   useEffect(() => {
     if (options?.enabled === false) return;

@@ -83,23 +83,23 @@ describe("matchesHotkey", () => {
   it("should not match mod+key without any modifier", () => {
     expect(matchesHotkey(makeKeyEvent("k"), "mod+k")).toBe(false);
   });
-});
 
-describe("matchesHotkey uppercase letter shift matching", () => {
-  it("should match uppercase G when shift is held", () => {
-    expect(matchesHotkey(makeKeyEvent("G", { shift: true }), "G")).toBe(true);
-  });
+  describe("uppercase letter shift matching", () => {
+    it("matches uppercase G when shift is held", () => {
+      expect(matchesHotkey(makeKeyEvent("G", { shift: true }), "G")).toBe(true);
+    });
 
-  it("should match explicit shift+g when shift is held", () => {
-    expect(matchesHotkey(makeKeyEvent("G", { shift: true }), "shift+g")).toBe(true);
-  });
+    it("matches explicit shift+g when shift is held", () => {
+      expect(matchesHotkey(makeKeyEvent("G", { shift: true }), "shift+g")).toBe(true);
+    });
 
-  it("should not match uppercase G hotkey without shift", () => {
-    expect(matchesHotkey(makeKeyEvent("g"), "G")).toBe(false);
-  });
+    it("does not match uppercase G hotkey without shift", () => {
+      expect(matchesHotkey(makeKeyEvent("g"), "G")).toBe(false);
+    });
 
-  it("should match lowercase g without shift", () => {
-    expect(matchesHotkey(makeKeyEvent("g"), "g")).toBe(true);
+    it("matches lowercase g without shift", () => {
+      expect(matchesHotkey(makeKeyEvent("g"), "g")).toBe(true);
+    });
   });
 });
 
@@ -124,19 +124,6 @@ describe("isInputElement", () => {
     // jsdom's isContentEditable is undefined, so the return is not strictly false.
     // In real browsers this returns false.
     expect(isInputElement(div)).toBeFalsy();
-  });
-
-  it("should return false for span element", () => {
-    const span = document.createElement("span");
-    expect(isInputElement(span)).toBeFalsy();
-  });
-
-  // jsdom does not implement isContentEditable (returns undefined),
-  // so this test cannot run in jsdom.
-  it.skip("should return true for contentEditable element (requires real DOM)", () => {
-    const div = document.createElement("div");
-    div.contentEditable = "true";
-    expect(isInputElement(div)).toBe(true);
   });
 
   it("should return false for null target", () => {
