@@ -24,35 +24,10 @@ describe("useScope", () => {
     cleanup();
   });
 
-  it("pushes scope so only that scope's handlers fire", () => {
+  it("scope push/pop lifecycle: active scope receives events, previous scope resumes on unmount", () => {
     const globalHandler = vi.fn();
     const modalHandler = vi.fn();
 
-    function Consumer() {
-      const { register } = useKeyboardContext();
-      useScope("modal");
-      useEffect(() => {
-        const c1 = register("global", "Escape", globalHandler);
-        const c2 = register("modal", "Escape", modalHandler);
-        return () => { c1(); c2(); };
-      }, []);
-      return <div>consumer</div>;
-    }
-
-    render(
-      <Wrapper>
-        <Consumer />
-      </Wrapper>,
-    );
-
-    act(() => pressKey("Escape"));
-    expect(modalHandler).toHaveBeenCalledOnce();
-    expect(globalHandler).not.toHaveBeenCalled();
-  });
-
-  it("pops scope on unmount so previous scope is active", () => {
-    const globalHandler = vi.fn();
-    const modalHandler = vi.fn();
     function GlobalConsumer() {
       const { register } = useKeyboardContext();
       useEffect(() => register("global", "Escape", globalHandler), []);
@@ -73,6 +48,7 @@ describe("useScope", () => {
       </Wrapper>,
     );
 
+    // While modal scope is active, only modal handlers fire
     act(() => pressKey("Escape"));
     expect(modalHandler).toHaveBeenCalledOnce();
     expect(globalHandler).not.toHaveBeenCalled();
@@ -84,6 +60,7 @@ describe("useScope", () => {
       </Wrapper>,
     );
 
+    // After pop, global scope is active again
     act(() => pressKey("Escape"));
     expect(globalHandler).toHaveBeenCalledOnce();
   });

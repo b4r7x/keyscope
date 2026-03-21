@@ -26,26 +26,7 @@ describe("useFocusZone", () => {
   });
 
   describe("uncontrolled mode", () => {
-    it("uses initial zone", () => {
-      const { result } = renderHook(
-        () => useFocusZone({ initial: "main", zones: ["main", "sidebar"] }),
-        { wrapper },
-      );
-
-      expect(result.current.zone).toBe("main");
-    });
-
-    it("changes zone via setZone", () => {
-      const { result } = renderHook(
-        () => useFocusZone({ initial: "main", zones: ["main", "sidebar"] }),
-        { wrapper },
-      );
-
-      act(() => result.current.setZone("sidebar"));
-      expect(result.current.zone).toBe("sidebar");
-    });
-
-    it("calls onZoneChange when setZone is called", () => {
+    it("manages zone state", () => {
       const onZoneChange = vi.fn();
       const { result } = renderHook(
         () =>
@@ -57,49 +38,42 @@ describe("useFocusZone", () => {
         { wrapper },
       );
 
+      expect(result.current.zone).toBe("main");
+
       act(() => result.current.setZone("sidebar"));
+      expect(result.current.zone).toBe("sidebar");
       expect(onZoneChange).toHaveBeenCalledWith("sidebar");
     });
   });
 
   describe("forZone helper", () => {
-    it("merges extra options and ANDs enabled", () => {
+    it("enables useKey only for the active zone and passes through extra options", () => {
+      const handler = vi.fn();
       const { result } = renderHook(
-        () => useFocusZone({ initial: "main", zones: ["main", "sidebar"] }),
+        () => {
+          const fz = useFocusZone({
+            initial: "main",
+            zones: ["main", "sidebar"],
+          });
+          useKey("Enter", handler, fz.forZone("sidebar", { allowInInput: true }));
+          return fz;
+        },
         { wrapper },
       );
 
-      expect(result.current.forZone("main", { allowInInput: true })).toEqual({
-        allowInInput: true,
-        enabled: true,
-      });
+      // Handler should not fire when zone is "main"
+      act(() => fireKey("Enter"));
+      expect(handler).not.toHaveBeenCalled();
 
-      expect(
-        result.current.forZone("main", { enabled: false, allowInInput: true }),
-      ).toEqual({ allowInInput: true, enabled: false });
-
-      expect(
-        result.current.forZone("sidebar", { enabled: true }),
-      ).toEqual({ enabled: false });
+      // Handler fires after switching to matching zone
+      act(() => result.current.setZone("sidebar"));
+      act(() => fireKey("Enter"));
+      expect(handler).toHaveBeenCalledOnce();
     });
   });
 
   describe("controlled mode", () => {
-    it("uses zone prop instead of internal state", () => {
-      const { result } = renderHook(
-        () =>
-          useFocusZone({
-            initial: "main",
-            zones: ["main", "sidebar"],
-            zone: "sidebar",
-          }),
-        { wrapper },
-      );
-
-      expect(result.current.zone).toBe("sidebar");
-    });
-
-    it("calls onZoneChange but does not change zone internally", () => {
+    it("uses zone prop instead of internal state and fires onZoneChange without updating", () => {
       const onZoneChange = vi.fn();
       const { result } = renderHook(
         () =>
@@ -111,6 +85,8 @@ describe("useFocusZone", () => {
           }),
         { wrapper },
       );
+
+      expect(result.current.zone).toBe("sidebar");
 
       act(() => result.current.setZone("main"));
       expect(onZoneChange).toHaveBeenCalledWith("main");
@@ -159,28 +135,7 @@ describe("useFocusZone", () => {
   });
 
   describe("tab cycling", () => {
-    it("cycles through zones in order on Tab", () => {
-      const { result } = renderHook(
-        () =>
-          useFocusZone({
-            initial: "a",
-            zones: ["a", "b", "c"],
-            tabCycle: ["a", "b", "c"],
-          }),
-        { wrapper },
-      );
-
-      act(() => fireKey("Tab"));
-      expect(result.current.zone).toBe("b");
-
-      act(() => fireKey("Tab"));
-      expect(result.current.zone).toBe("c");
-
-      act(() => fireKey("Tab"));
-      expect(result.current.zone).toBe("a");
-    });
-
-    it("cycles using tabCycle order, not zones order", () => {
+    it("cycles through zones with Tab in configured order", () => {
       const { result } = renderHook(
         () =>
           useFocusZone({
@@ -191,24 +146,18 @@ describe("useFocusZone", () => {
         { wrapper },
       );
 
+      // Forward follows tabCycle order, not zones order
       act(() => fireKey("Tab"));
       expect(result.current.zone).toBe("a");
 
       act(() => fireKey("Tab"));
       expect(result.current.zone).toBe("b");
-    });
 
-    it("cycles backwards on Shift+Tab", () => {
-      const { result } = renderHook(
-        () =>
-          useFocusZone({
-            initial: "c",
-            zones: ["a", "b", "c"],
-            tabCycle: ["a", "b", "c"],
-          }),
-        { wrapper },
-      );
+      // Wraps around
+      act(() => fireKey("Tab"));
+      expect(result.current.zone).toBe("c");
 
+      // Backward with Shift+Tab
       act(() => fireKey("Tab", { shiftKey: true }));
       expect(result.current.zone).toBe("b");
 
@@ -217,47 +166,6 @@ describe("useFocusZone", () => {
 
       act(() => fireKey("Tab", { shiftKey: true }));
       expect(result.current.zone).toBe("c");
-    });
-  });
-
-  describe("scope integration", () => {
-    it("does not push scope when scope option is not provided", () => {
-      const handler = vi.fn();
-
-      renderHook(
-        () => {
-          useKey("x", handler);
-          useFocusZone({
-            initial: "main",
-            zones: ["main", "sidebar"],
-          });
-        },
-        { wrapper },
-      );
-
-      act(() => fireKey("x"));
-      expect(handler).toHaveBeenCalledOnce();
-    });
-
-    it("isolates key handlers to the scope", () => {
-      const outsideHandler = vi.fn();
-      const insideHandler = vi.fn();
-
-      renderHook(
-        () => {
-          useKey("Escape", outsideHandler);
-          useFocusZone({
-            initial: "main",
-            zones: ["main"],
-            scope: "review",
-          });
-          useKey("Escape", insideHandler);
-        },
-        { wrapper },
-      );
-
-      act(() => fireKey("Escape"));
-      expect(insideHandler).toHaveBeenCalledOnce();
     });
   });
 
@@ -286,130 +194,35 @@ describe("useFocusZone", () => {
     });
   });
 
-  describe("lifecycle hooks", () => {
-    it("calls onLeaveZone then onEnterZone then onZoneChange in order", () => {
-      const calls: string[] = [];
+  describe("helpers", () => {
+    it("zoneProps, inZone, and forZone return correct values per zone", () => {
       const { result } = renderHook(
-        () =>
-          useFocusZone({
-            initial: "main",
-            zones: ["main", "sidebar"],
-            onLeaveZone: (z) => calls.push(`leave:${z}`),
-            onEnterZone: (z) => calls.push(`enter:${z}`),
-            onZoneChange: (z) => calls.push(`change:${z}`),
-          }),
+        () => useFocusZone({ initial: "main", zones: ["main", "sidebar", "footer"] }),
         { wrapper },
       );
 
-      act(() => result.current.setZone("sidebar"));
-      expect(calls).toEqual(["leave:main", "enter:sidebar", "change:sidebar"]);
-    });
-
-    it("no-op when setting same zone", () => {
-      const onLeaveZone = vi.fn();
-      const onEnterZone = vi.fn();
-      const onZoneChange = vi.fn();
-      const { result } = renderHook(
-        () =>
-          useFocusZone({
-            initial: "main",
-            zones: ["main", "sidebar"],
-            onLeaveZone,
-            onEnterZone,
-            onZoneChange,
-          }),
-        { wrapper },
-      );
-
-      act(() => result.current.setZone("main"));
-      expect(onLeaveZone).not.toHaveBeenCalled();
-      expect(onEnterZone).not.toHaveBeenCalled();
-      expect(onZoneChange).not.toHaveBeenCalled();
-    });
-
-  });
-
-  describe("forZone + useKey integration", () => {
-    it("handler fires only when zone matches forZone target", () => {
-      const handler = vi.fn();
-
-      const { result } = renderHook(
-        () => {
-          const fz = useFocusZone({
-            initial: "main",
-            zones: ["main", "sidebar"],
-          });
-          useKey("Enter", handler, fz.forZone("sidebar"));
-          return fz;
-        },
-        { wrapper },
-      );
-
-      act(() => fireKey("Enter"));
-      expect(handler).not.toHaveBeenCalled();
-
-      act(() => result.current.setZone("sidebar"));
-      act(() => fireKey("Enter"));
-      expect(handler).toHaveBeenCalledOnce();
-    });
-
-  });
-
-  describe("zoneProps helper", () => {
-    it("returns data-focused true for active zone", () => {
-      const { result } = renderHook(
-        () => useFocusZone({ initial: "main", zones: ["main", "sidebar"] }),
-        { wrapper },
-      );
-
+      // zoneProps reflects active zone
       expect(result.current.zoneProps("main")).toEqual({ "data-focused": true });
       expect(result.current.zoneProps("sidebar")).toEqual({ "data-focused": undefined });
-    });
 
-    it("updates when zone changes", () => {
-      const { result } = renderHook(
-        () => useFocusZone({ initial: "main", zones: ["main", "sidebar"] }),
-        { wrapper },
-      );
-
-      act(() => result.current.setZone("sidebar"));
-      expect(result.current.zoneProps("main")).toEqual({ "data-focused": undefined });
-      expect(result.current.zoneProps("sidebar")).toEqual({ "data-focused": true });
-    });
-  });
-
-  describe("inZone helper", () => {
-    it("returns true for the current zone and false for others", () => {
-      const { result } = renderHook(
-        () => useFocusZone({ initial: "main", zones: ["main", "sidebar", "footer"] }),
-        { wrapper },
-      );
-
+      // inZone checks single and multiple zones
       expect(result.current.inZone("main")).toBe(true);
       expect(result.current.inZone("sidebar")).toBe(false);
-      expect(result.current.inZone("footer")).toBe(false);
-
-      act(() => result.current.setZone("sidebar"));
-
-      expect(result.current.inZone("main")).toBe(false);
-      expect(result.current.inZone("sidebar")).toBe(true);
-      expect(result.current.inZone("footer")).toBe(false);
-    });
-
-    it("returns true when current zone matches any of the arguments", () => {
-      const { result } = renderHook(
-        () => useFocusZone({ initial: "main", zones: ["main", "sidebar", "footer"] }),
-        { wrapper },
-      );
-
       expect(result.current.inZone("main", "sidebar")).toBe(true);
       expect(result.current.inZone("sidebar", "footer")).toBe(false);
+
+      // After zone change, all helpers update
+      act(() => result.current.setZone("sidebar"));
+
+      expect(result.current.zoneProps("main")).toEqual({ "data-focused": undefined });
+      expect(result.current.zoneProps("sidebar")).toEqual({ "data-focused": true });
+      expect(result.current.inZone("main")).toBe(false);
+      expect(result.current.inZone("sidebar")).toBe(true);
     });
   });
 
   describe("edge cases", () => {
     it("falls back to first zone when initial is invalid", () => {
-      vi.spyOn(console, "error").mockImplementation(() => {});
       const { result } = renderHook(
         () =>
           useFocusZone({

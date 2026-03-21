@@ -1,4 +1,4 @@
-import { createContext, useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
+import { createContext, useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { isInputElement, matchesHotkey } from "../utils/keyboard-utils.js";
 
 type Handler = (event: KeyboardEvent) => void;
@@ -73,7 +73,7 @@ export function KeyboardProvider({ children }: { children: ReactNode }) {
             if (isInput && !entry.options?.allowInInput) continue;
             if (!isWithinTarget(event.target, entry.options)) continue;
 
-            if (entry.options?.preventDefault === true) {
+            if (entry.options?.preventDefault) {
               event.preventDefault();
             }
 
@@ -124,7 +124,5 @@ export function KeyboardProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const contextValue = useMemo<KeyboardContextValue>(() => ({ activeScope, pushScope, register }), [activeScope, pushScope, register]);
-
-  return <KeyboardContext.Provider value={contextValue}>{children}</KeyboardContext.Provider>;
+  return <KeyboardContext.Provider value={{ activeScope, pushScope, register }}>{children}</KeyboardContext.Provider>;
 }

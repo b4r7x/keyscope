@@ -17,22 +17,7 @@ function pressKey(key: string, modifiers: Partial<KeyboardEventInit> = {}) {
 describe("KeyboardProvider", () => {
   afterEach(() => cleanup());
 
-  it("should fire handler when matching key is pressed in active scope", () => {
-    const handler = vi.fn();
-
-    function Consumer() {
-      const { register } = useKeyboardContext();
-      useEffect(() => register("global", "a", handler), []);
-      return <div>consumer</div>;
-    }
-
-    render(<Wrapper><Consumer /></Wrapper>);
-
-    act(() => pressKey("a"));
-    expect(handler).toHaveBeenCalledOnce();
-  });
-
-  it("should not fire handler for non-matching key", () => {
+  it("should fire handler only for matching key in active scope", () => {
     const handler = vi.fn();
 
     function Consumer() {
@@ -45,6 +30,9 @@ describe("KeyboardProvider", () => {
 
     act(() => pressKey("b"));
     expect(handler).not.toHaveBeenCalled();
+
+    act(() => pressKey("a"));
+    expect(handler).toHaveBeenCalledOnce();
   });
 
   it("should call preventDefault only when option is explicitly true", () => {

@@ -93,12 +93,6 @@ export function useFocusZone<T extends string>(
 
   useScope(options.scope ?? "__noop__", { enabled: enabled && !!options.scope });
 
-  if (process.env.NODE_ENV !== "production" && !zones.includes(initial)) {
-    console.error(
-      `[keyscope] useFocusZone: initial zone "${initial}" is not in zones [${zones.join(", ")}]`
-    );
-  }
-
   const safeZone = zones.includes(currentZone) ? currentZone : zones[0];
 
   return {

@@ -46,22 +46,30 @@ describe("useFocusTrap", () => {
   }
 
   describe("initial focus", () => {
-    it("focuses first focusable element on mount", () => {
+    it("focuses first focusable element, falls back to container, and respects initialFocus", () => {
+      // Default: focuses first focusable element
       container = createContainer(
         '<button id="a">A</button>',
         '<button id="b">B</button>',
       );
       renderTrap(container);
       expect(document.activeElement).toBe(container.querySelector("#a"));
-    });
 
-    it("focuses container when no focusable elements exist", () => {
+      cleanup();
+      container.remove();
+
+      // No focusable elements: focuses container and Tab does not preventDefault
       container = createContainer("<p>No focusable</p>");
       renderTrap(container);
       expect(document.activeElement).toBe(container);
-    });
 
-    it("focuses initialFocus element when provided", () => {
+      const event = fireTab();
+      expect(event.defaultPrevented).toBe(false);
+
+      cleanup();
+      container.remove();
+
+      // initialFocus: focuses the specified element
       container = createContainer(
         '<button id="a">A</button>',
         '<button id="b">B</button>',
@@ -79,7 +87,7 @@ describe("useFocusTrap", () => {
   });
 
   describe("Tab cycling", () => {
-    it("wraps focus from last to first on Tab", () => {
+    it("wraps focus bidirectionally (Tab and Shift+Tab)", () => {
       container = createContainer(
         '<button id="a">A</button>',
         '<button id="b">B</button>',
@@ -87,42 +95,17 @@ describe("useFocusTrap", () => {
       );
       renderTrap(container);
 
+      // Tab at last element wraps to first
       const last = container.querySelector<HTMLElement>("#c")!;
       last.focus();
-      expect(document.activeElement).toBe(last);
-
-      const event = fireTab();
-      expect(event.defaultPrevented).toBe(true);
+      const tabEvent = fireTab();
+      expect(tabEvent.defaultPrevented).toBe(true);
       expect(document.activeElement).toBe(container.querySelector("#a"));
-    });
 
-    it("wraps focus from first to last on Shift+Tab", () => {
-      container = createContainer(
-        '<button id="a">A</button>',
-        '<button id="b">B</button>',
-        '<button id="c">C</button>',
-      );
-      renderTrap(container);
-
-      const first = container.querySelector<HTMLElement>("#a")!;
-      first.focus();
-
-      const event = fireTab(true);
-      expect(event.defaultPrevented).toBe(true);
+      // Shift+Tab at first element wraps to last
+      const shiftTabEvent = fireTab(true);
+      expect(shiftTabEvent.defaultPrevented).toBe(true);
       expect(document.activeElement).toBe(container.querySelector("#c"));
-    });
-
-    it("does not prevent default when focus is in the middle", () => {
-      container = createContainer(
-        '<button id="a">A</button>',
-        '<button id="b">B</button>',
-        '<button id="c">C</button>',
-      );
-      renderTrap(container);
-
-      container.querySelector<HTMLElement>("#b")!.focus();
-      const event = fireTab();
-      expect(event.defaultPrevented).toBe(false);
     });
 
     it("handles dynamic content (re-queries on each Tab)", () => {
@@ -144,7 +127,7 @@ describe("useFocusTrap", () => {
   });
 
   describe("focus restoration", () => {
-    it("restores focus on unmount when restoreFocus is true", () => {
+    it("restores focus on unmount only when restoreFocus is true", () => {
       const outsideButton = document.createElement("button");
       outsideButton.id = "outside";
       document.body.appendChild(outsideButton);
@@ -159,21 +142,15 @@ describe("useFocusTrap", () => {
       unmount();
       expect(document.activeElement).toBe(outsideButton);
 
-      outsideButton.remove();
-    });
-
-    it("does not restore focus when restoreFocus is false", () => {
-      const outsideButton = document.createElement("button");
-      outsideButton.id = "outside";
-      document.body.appendChild(outsideButton);
+      // restoreFocus: false — does not restore
       outsideButton.focus();
-
+      container.remove();
       container = createContainer('<button id="a">A</button>');
-      const { unmount } = renderTrap(container, { restoreFocus: false });
+      const { unmount: unmount2 } = renderTrap(container, { restoreFocus: false });
 
       expect(document.activeElement).toBe(container.querySelector("#a"));
 
-      unmount();
+      unmount2();
       expect(document.activeElement).not.toBe(outsideButton);
 
       outsideButton.remove();
@@ -209,18 +186,6 @@ describe("useFocusTrap", () => {
 
       rerender({ enabled: true });
       expect(document.activeElement).toBe(container.querySelector("#a"));
-    });
-  });
-
-  describe("empty container", () => {
-    it("does not crash when container has no focusable elements and Tab is pressed", () => {
-      container = createContainer("<p>No buttons</p>");
-      renderTrap(container);
-
-      expect(document.activeElement).toBe(container);
-
-      const event = fireTab();
-      expect(event.defaultPrevented).toBe(false);
     });
   });
 });

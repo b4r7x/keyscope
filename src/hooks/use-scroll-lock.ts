@@ -32,5 +32,5 @@ export function useScrollLock(
         lockCounts.set(el, next);
       }
     };
-  }, [enabled]);
+  }, [enabled, target]);
 }

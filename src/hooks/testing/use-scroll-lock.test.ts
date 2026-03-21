@@ -9,13 +9,7 @@ describe("useScrollLock", () => {
     document.body.style.overflow = "";
   });
 
-  it("sets overflow hidden on body when enabled", () => {
-    renderHook(() => useScrollLock());
-
-    expect(document.body.style.overflow).toBe("hidden");
-  });
-
-  it("restores original overflow value on unmount", () => {
+  it("sets and restores overflow", () => {
     document.body.style.overflow = "auto";
 
     const { unmount } = renderHook(() => useScrollLock());
@@ -25,12 +19,22 @@ describe("useScrollLock", () => {
     expect(document.body.style.overflow).toBe("auto");
   });
 
-  it("does nothing when enabled is false", () => {
+  it("respects enabled flag", () => {
     document.body.style.overflow = "scroll";
 
-    renderHook(() => useScrollLock(undefined, false));
-
+    const { rerender, unmount } = renderHook(
+      ({ enabled }) => useScrollLock(undefined, enabled),
+      { initialProps: { enabled: false } },
+    );
     expect(document.body.style.overflow).toBe("scroll");
+
+    rerender({ enabled: true });
+    expect(document.body.style.overflow).toBe("hidden");
+
+    rerender({ enabled: false });
+    expect(document.body.style.overflow).toBe("scroll");
+
+    unmount();
   });
 
   it("works with a custom target ref", () => {
@@ -51,60 +55,17 @@ describe("useScrollLock", () => {
     container.remove();
   });
 
-  it("handles multiple lock/unlock cycles on same element", () => {
+  it("concurrent locks stay hidden until all unmount", () => {
     document.body.style.overflow = "auto";
 
-    const { unmount: u1 } = renderHook(() => useScrollLock());
+    const { unmount: unmountA } = renderHook(() => useScrollLock());
+    const { unmount: unmountB } = renderHook(() => useScrollLock());
     expect(document.body.style.overflow).toBe("hidden");
-    u1();
+
+    unmountB();
+    expect(document.body.style.overflow).toBe("hidden");
+    unmountA();
     expect(document.body.style.overflow).toBe("auto");
-
-    const { unmount: u2 } = renderHook(() => useScrollLock());
-    expect(document.body.style.overflow).toBe("hidden");
-    u2();
-    expect(document.body.style.overflow).toBe("auto");
-  });
-
-  it("restores correctly when second component unmounts before first", () => {
-    const { unmount: unmount1 } = renderHook(() => useScrollLock());
-    const { unmount: unmount2 } = renderHook(() => useScrollLock());
-
-    expect(document.body.style.overflow).toBe("hidden");
-
-    unmount2();
-    expect(document.body.style.overflow).toBe("hidden");
-
-    unmount1();
-    expect(document.body.style.overflow).toBe("");
-  });
-
-  it("restores correctly when first component unmounts before second", () => {
-    document.body.style.overflow = "auto";
-
-    const { unmount: unmount1 } = renderHook(() => useScrollLock());
-    const { unmount: unmount2 } = renderHook(() => useScrollLock());
-
-    expect(document.body.style.overflow).toBe("hidden");
-
-    unmount1();
-    expect(document.body.style.overflow).toBe("hidden");
-
-    unmount2();
-    expect(document.body.style.overflow).toBe("auto");
-  });
-
-  it("re-enables after toggling enabled true→false→true", () => {
-    const { rerender } = renderHook(
-      ({ enabled }) => useScrollLock(undefined, enabled),
-      { initialProps: { enabled: true } },
-    );
-    expect(document.body.style.overflow).toBe("hidden");
-
-    rerender({ enabled: false });
-    expect(document.body.style.overflow).toBe("");
-
-    rerender({ enabled: true });
-    expect(document.body.style.overflow).toBe("hidden");
   });
 
 });

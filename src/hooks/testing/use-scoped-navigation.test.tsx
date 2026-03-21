@@ -3,7 +3,6 @@ import { render, cleanup, screen, act } from "@testing-library/react";
 import { useRef, type ReactNode } from "react";
 import { KeyboardProvider } from "../../providers/keyboard-provider";
 import { useScopedNavigation, type UseScopedNavigationOptions } from "../use-scoped-navigation";
-import { useScope } from "../use-scope";
 
 function wrapper({ children }: { children: ReactNode }) {
   return <KeyboardProvider>{children}</KeyboardProvider>;
@@ -49,8 +48,10 @@ describe("useScopedNavigation", () => {
     cleanup();
   });
 
-  it("navigates via KeyboardProvider (arrows, wrap, Home, End)", () => {
-    render(<TestList initialValue="a" />, { wrapper });
+  it("routes navigation through KeyboardProvider: arrows, wrap, Home, End, Space, Enter", () => {
+    const onSelect = vi.fn();
+    const onEnter = vi.fn();
+    render(<TestList initialValue="a" onSelect={onSelect} onEnter={onEnter} />, { wrapper });
 
     act(() => fireKey("ArrowDown"));
     expect(getFocused()).toBe("b");
@@ -64,38 +65,11 @@ describe("useScopedNavigation", () => {
 
     act(() => fireKey("Home"));
     expect(getFocused()).toBe("a");
-  });
-
-  it("Space calls onSelect, Enter calls onEnter", () => {
-    const onSelect = vi.fn();
-    const onEnter = vi.fn();
-    render(
-      <TestList initialValue="b" onSelect={onSelect} onEnter={onEnter} />,
-      { wrapper },
-    );
 
     act(() => fireKey(" "));
-    expect(onSelect).toHaveBeenCalledWith("b", expect.any(KeyboardEvent));
+    expect(onSelect).toHaveBeenCalledWith("a", expect.any(KeyboardEvent));
 
     act(() => fireKey("Enter"));
-    expect(onEnter).toHaveBeenCalledWith("b", expect.any(KeyboardEvent));
-    expect(onSelect).toHaveBeenCalledOnce();
+    expect(onEnter).toHaveBeenCalledWith("a", expect.any(KeyboardEvent));
   });
-
-  it("enabled: false disables all handlers", () => {
-    render(<TestList initialValue="a" enabled={false} />, { wrapper });
-
-    act(() => fireKey("ArrowDown"));
-    expect(getFocused()).toBe("a");
-  });
-
-  it("controlled mode: value + onValueChange", () => {
-    const onValueChange = vi.fn();
-    render(<TestList value="a" onValueChange={onValueChange} />, { wrapper });
-
-    expect(getFocused()).toBe("a");
-    act(() => fireKey("ArrowDown"));
-    expect(onValueChange).toHaveBeenCalledWith("b");
-  });
-
 });

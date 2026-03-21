@@ -42,6 +42,12 @@ export function useKey(
   const register = ctx?.register ?? null;
   const activeScope = ctx?.activeScope ?? null;
 
+  const enabled = options?.enabled;
+  const allowInInput = options?.allowInInput;
+  const targetRef = options?.targetRef;
+  const requireFocusWithin = options?.requireFocusWithin;
+  const preventDefault = options?.preventDefault;
+
   const stableDispatch = useEffectEvent((key: string, event: KeyboardEvent) => {
     handlerMap[key]?.(event);
   });
@@ -50,15 +56,15 @@ export function useKey(
 
   const handlerOptions: HandlerOptions | undefined = options
     ? {
-        allowInInput: options.allowInInput,
-        targetRef: options.targetRef,
-        requireFocusWithin: options.requireFocusWithin,
-        preventDefault: options.preventDefault,
+        allowInInput,
+        targetRef,
+        requireFocusWithin,
+        preventDefault,
       }
     : undefined;
 
   useEffect(() => {
-    if (options?.enabled === false) return;
+    if (enabled === false) return;
     if (!register || !activeScope) return;
 
     const keys = keysKey.split(",");
@@ -76,10 +82,10 @@ export function useKey(
     register,
     activeScope,
     keysKey,
-    options?.enabled,
-    options?.allowInInput,
-    options?.targetRef,
-    options?.requireFocusWithin,
-    options?.preventDefault,
+    enabled,
+    allowInInput,
+    targetRef,
+    requireFocusWithin,
+    preventDefault,
   ]);
 }

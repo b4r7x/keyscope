@@ -114,15 +114,7 @@ export function useNavigationCore({
 
   const move = (delta: 1 | -1) => {
     const elements = getElements();
-    if (elements.length === 0) {
-      if (process.env.NODE_ENV !== "production") {
-        console.warn(
-          `[useNavigation] No elements found matching [role="${role}"]. ` +
-          `Ensure each navigable element has an explicit role="${role}" attribute.`,
-        );
-      }
-      return;
-    }
+    if (elements.length === 0) return;
 
     const current = getFocusedIndex();
     const rawNext = current + delta;
