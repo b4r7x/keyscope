@@ -44,6 +44,7 @@ buildDocsData({
   registryPath: resolve(ROOT, "registry/registry.json"),
   examplesDir: resolve(ROOT, "registry/examples"),
   outputDir: resolve(ROOT, "docs/generated"),
+  skipMdxGeneration: true,
   hooks: {
     contentDir: resolve(ROOT, "docs/content/hooks"),
     extraItems: PROVIDER_HOOKS,
