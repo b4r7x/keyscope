@@ -1,3 +1,5 @@
+"use client"
+
 import { useState } from "react"
 import { KeyboardProvider, useKey } from "keyscope"
 
@@ -9,9 +11,9 @@ function Counter() {
   useKey("Escape", () => setCount(0))
 
   return (
-    <div>
-      <p>Count: {count}</p>
-      <p>↑ increment · ↓ decrement · Esc reset</p>
+    <div className="space-y-2">
+      <p className="text-lg font-mono">Count: {count}</p>
+      <p className="text-xs text-muted-foreground">↑ increment · ↓ decrement · Esc reset</p>
     </div>
   )
 }

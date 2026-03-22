@@ -1,3 +1,5 @@
+"use client"
+
 import { useRef, useState } from "react"
 import { useNavigation } from "keyscope"
 
@@ -22,7 +24,7 @@ export default function UseNavigationTabs() {
         onKeyDown={onKeyDown}
         tabIndex={0}
         role="tablist"
-        style={{ display: "flex", gap: 4, borderBottom: "1px solid #333" }}
+        className="flex gap-1 border-b border-border"
       >
         {tabs.map((tab) => (
           <div
@@ -31,18 +33,19 @@ export default function UseNavigationTabs() {
             data-value={tab}
             aria-selected={activeTab === tab}
             onClick={() => setActiveTab(tab)}
-            style={{
-              padding: "8px 16px",
-              borderBottom: activeTab === tab ? "2px solid #0cf" : "2px solid transparent",
-              background: isHighlighted(tab) ? "#222" : "transparent",
-              cursor: "pointer",
-            }}
+            className={`px-4 py-2 cursor-pointer ${
+              activeTab === tab
+                ? "border-b-2 border-primary font-bold text-foreground"
+                : isHighlighted(tab)
+                  ? "bg-foreground text-background font-bold"
+                  : "text-muted-foreground"
+            }`}
           >
             {tab}
           </div>
         ))}
       </div>
-      <div role="tabpanel" style={{ padding: 16 }}>
+      <div role="tabpanel" className="p-4">
         Content for {activeTab}
       </div>
     </div>

@@ -1,28 +1,30 @@
+"use client"
+
 import { useState } from "react"
 import { useScrollLock } from "keyscope"
+
+const btnClass = "px-3 py-1.5 border border-border text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
 
 function Overlay({ onClose }: { onClose: () => void }) {
   useScrollLock()
 
   return (
     <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0, 0, 0, 0.6)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
+      className="fixed inset-0 bg-black/60 flex items-center justify-center"
       onClick={onClose}
     >
       <div
-        style={{ background: "#1a1a1a", padding: 24, borderRadius: 8 }}
+        className="bg-background border border-border p-6"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2>Overlay</h2>
-        <p>Background scroll is locked while this overlay is visible.</p>
-        <button onClick={onClose}>Close</button>
+        <h2 className="text-sm font-bold mb-2">Overlay</h2>
+        <p className="text-sm text-muted-foreground mb-3">Background scroll is locked while this overlay is visible.</p>
+        <button
+          onClick={onClose}
+          className={btnClass}
+        >
+          Close
+        </button>
       </div>
     </div>
   )
@@ -32,9 +34,14 @@ export default function UseScrollLockBasic() {
   const [open, setOpen] = useState(false)
 
   return (
-    <div style={{ height: 2000 }}>
-      <button onClick={() => setOpen(true)}>Show Overlay</button>
-      <p>Scroll down to see content. Opening the overlay locks scroll.</p>
+    <div className="h-[500px]">
+      <button
+        onClick={() => setOpen(true)}
+        className="px-3 py-1.5 border border-border text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+      >
+        Show Overlay
+      </button>
+      <p className="text-sm text-muted-foreground mt-2">Scroll down to see content. Opening the overlay locks scroll.</p>
       {open && <Overlay onClose={() => setOpen(false)} />}
     </div>
   )

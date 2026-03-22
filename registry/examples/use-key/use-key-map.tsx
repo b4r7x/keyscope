@@ -1,3 +1,5 @@
+"use client"
+
 import { useState } from "react"
 import { KeyboardProvider, useKey } from "keyscope"
 
@@ -12,14 +14,19 @@ function TextFormatter() {
   })
 
   return (
-    <div>
-      <p style={{ fontWeight: style === "bold" ? "bold" : undefined,
-                  fontStyle: style === "italic" ? "italic" : undefined,
-                  textDecoration: style === "underline" ? "underline" : undefined }}>
+    <div className="space-y-2">
+      <p
+        className={
+          style === "bold" ? "font-bold" :
+          style === "italic" ? "italic" :
+          style === "underline" ? "underline" :
+          ""
+        }
+      >
         The quick brown fox jumps over the lazy dog.
       </p>
-      <p>Active style: {style}</p>
-      <p>Ctrl+B bold · Ctrl+I italic · Ctrl+U underline · Esc reset</p>
+      <p className="text-sm text-muted-foreground">Active style: {style}</p>
+      <p className="text-xs text-muted-foreground">Ctrl+B bold · Ctrl+I italic · Ctrl+U underline · Esc reset</p>
     </div>
   )
 }

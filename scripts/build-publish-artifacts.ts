@@ -44,6 +44,7 @@ function main(): void {
       keyscopeHooksFile: "generated/keyscope-hooks.json",
       hookList: "generated/hook-list.json",
       hooksDir: "generated/hooks",
+      demoIndex: "generated/demo-index.ts",
     },
   });
 

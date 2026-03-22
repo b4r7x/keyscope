@@ -1,3 +1,5 @@
+"use client"
+
 import { useRef } from "react"
 import { KeyboardProvider, useFocusZone, useScopedNavigation } from "keyscope"
 
@@ -18,7 +20,7 @@ function Layout() {
   const mainItems = ["Item A", "Item B", "Item C", "Item D"]
 
   return (
-    <div style={{ display: "flex", gap: 16 }}>
+    <div className="flex gap-4">
       <Pane
         title="Sidebar"
         items={sidebarItems}
@@ -56,8 +58,8 @@ function Pane({
   })
 
   return (
-    <div style={{ border: `1px solid ${active ? "#0cf" : "#333"}`, padding: 12, minWidth: 160 }}>
-      <h3>{title}</h3>
+    <div className={`border p-3 min-w-40 ${active ? "border-primary" : "border-border"}`}>
+      <h3 className="text-sm font-bold mb-2">{title}</h3>
       <div ref={containerRef} role="listbox">
         {items.map((item) => (
           <div
@@ -65,10 +67,7 @@ function Pane({
             role="option"
             data-value={item}
             aria-selected={isHighlighted(item)}
-            style={{
-              padding: "4px 8px",
-              background: isHighlighted(item) ? "#333" : "transparent",
-            }}
+            className={`px-2 py-1 ${isHighlighted(item) ? "bg-foreground text-background font-bold" : "text-muted-foreground"}`}
           >
             {item}
           </div>

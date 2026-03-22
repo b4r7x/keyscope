@@ -1,3 +1,5 @@
+"use client"
+
 import { useRef, useState } from "react"
 import { KeyboardProvider, useScope, useScopedNavigation } from "keyscope"
 
@@ -19,8 +21,8 @@ function CommandPalette({ onClose }: { onClose: () => void }) {
   })
 
   return (
-    <div style={{ border: "1px solid #555", padding: 16 }}>
-      <h3>Command Palette</h3>
+    <div className="border border-border p-4">
+      <h3 className="text-sm font-bold mb-2">Command Palette</h3>
       <div ref={listRef} role="listbox" tabIndex={0}>
         {commands.map((cmd) => (
           <div
@@ -28,11 +30,7 @@ function CommandPalette({ onClose }: { onClose: () => void }) {
             role="option"
             data-value={cmd}
             aria-selected={isHighlighted(cmd)}
-            style={{
-              padding: "6px 12px",
-              background: isHighlighted(cmd) ? "#333" : "transparent",
-              color: isHighlighted(cmd) ? "#fff" : "inherit",
-            }}
+            className={`px-3 py-1.5 ${isHighlighted(cmd) ? "bg-foreground text-background font-bold" : "text-muted-foreground"}`}
           >
             {cmd}
           </div>
@@ -47,7 +45,9 @@ function App() {
 
   return (
     <div>
-      <button onClick={() => setOpen(true)}>Open Command Palette</button>
+      <button onClick={() => setOpen(true)} className="px-3 py-1.5 border border-border text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground">
+        Open Command Palette
+      </button>
       {open && <CommandPalette onClose={() => setOpen(false)} />}
     </div>
   )

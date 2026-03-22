@@ -1,3 +1,5 @@
+"use client"
+
 import { useRef } from "react"
 import { useNavigation } from "keyscope"
 
@@ -19,6 +21,7 @@ export default function UseNavigationBasic() {
       tabIndex={0}
       role="listbox"
       aria-label="Fruits"
+      className="focus:outline-none"
     >
       {items.map((item) => (
         <div
@@ -26,11 +29,7 @@ export default function UseNavigationBasic() {
           role="option"
           aria-selected={isHighlighted(item)}
           data-value={item}
-          style={{
-            padding: "8px 12px",
-            background: isHighlighted(item) ? "#333" : "transparent",
-            color: isHighlighted(item) ? "#fff" : "inherit",
-          }}
+          className={`px-3 py-2 ${isHighlighted(item) ? "bg-foreground text-background font-bold" : "text-muted-foreground"}`}
         >
           {item}
         </div>
