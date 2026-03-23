@@ -2,6 +2,9 @@
 
 import { useRef } from "react"
 import { KeyboardProvider, useFocusZone, useScopedNavigation } from "keyscope"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Kbd } from "@/components/ui/kbd"
 
 type Zone = "sidebar" | "main"
 
@@ -20,19 +23,32 @@ function Layout() {
   const mainItems = ["Item A", "Item B", "Item C", "Item D"]
 
   return (
-    <div className="flex gap-4">
-      <Pane
-        title="Sidebar"
-        items={sidebarItems}
-        active={inZone("sidebar")}
-        enabled={zone === "sidebar"}
-      />
-      <Pane
-        title="Main"
-        items={mainItems}
-        active={inZone("main")}
-        enabled={zone === "main"}
-      />
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <Badge variant={zone === "sidebar" ? "info" : "neutral"} dot>
+          Sidebar
+        </Badge>
+        <Badge variant={zone === "main" ? "info" : "neutral"} dot>
+          Main
+        </Badge>
+        <span className="text-xs text-muted-foreground ml-2">
+          <Kbd size="sm">←</Kbd> <Kbd size="sm">→</Kbd> switch zones
+        </span>
+      </div>
+      <div className="flex gap-4">
+        <Pane
+          title="Sidebar"
+          items={sidebarItems}
+          active={inZone("sidebar")}
+          enabled={zone === "sidebar"}
+        />
+        <Pane
+          title="Main"
+          items={mainItems}
+          active={inZone("main")}
+          enabled={zone === "main"}
+        />
+      </div>
     </div>
   )
 }
@@ -58,22 +74,26 @@ function Pane({
   })
 
   return (
-    <div className={`border p-3 min-w-40 ${active ? "border-primary" : "border-border"}`}>
-      <h3 className="text-sm font-bold mb-2">{title}</h3>
-      <div ref={containerRef} role="listbox">
-        {items.map((item) => (
-          <div
-            key={item}
-            role="option"
-            data-value={item}
-            aria-selected={isHighlighted(item)}
-            className={`px-2 py-1 ${isHighlighted(item) ? "bg-foreground text-background font-bold" : "text-muted-foreground"}`}
-          >
-            {item}
-          </div>
-        ))}
-      </div>
-    </div>
+    <Card className={`min-w-40 ${active ? "border-primary" : ""}`}>
+      <CardHeader>
+        <CardTitle as="h4">{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div ref={containerRef} role="listbox">
+          {items.map((item) => (
+            <div
+              key={item}
+              role="option"
+              data-value={item}
+              aria-selected={isHighlighted(item)}
+              className={`px-4 py-2 text-sm ${isHighlighted(item) ? "bg-foreground text-background font-bold" : "text-muted-foreground"}`}
+            >
+              {item}
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 

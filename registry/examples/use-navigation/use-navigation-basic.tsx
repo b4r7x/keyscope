@@ -2,6 +2,8 @@
 
 import { useRef } from "react"
 import { useNavigation } from "keyscope"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { Kbd } from "@/components/ui/kbd"
 
 const items = ["Apple", "Banana", "Cherry", "Date", "Elderberry"]
 
@@ -15,25 +17,36 @@ export default function UseNavigationBasic() {
   })
 
   return (
-    <div
-      ref={containerRef}
-      onKeyDown={onKeyDown}
-      tabIndex={0}
-      role="listbox"
-      aria-label="Fruits"
-      className="focus:outline-none"
-    >
-      {items.map((item) => (
+    <Card size="sm">
+      <CardHeader>
+        <CardTitle as="h3">Fruit Picker</CardTitle>
+        <p className="text-xs text-muted-foreground">
+          <Kbd size="sm">↑</Kbd> <Kbd size="sm">↓</Kbd> navigate
+          {" "}<Kbd size="sm">Enter</Kbd> select
+        </p>
+      </CardHeader>
+      <CardContent className="p-0">
         <div
-          key={item}
-          role="option"
-          aria-selected={isHighlighted(item)}
-          data-value={item}
-          className={`px-3 py-2 ${isHighlighted(item) ? "bg-foreground text-background font-bold" : "text-muted-foreground"}`}
+          ref={containerRef}
+          onKeyDown={onKeyDown}
+          tabIndex={0}
+          role="listbox"
+          aria-label="Fruits"
+          className="focus:outline-none"
         >
-          {item}
+          {items.map((item) => (
+            <div
+              key={item}
+              role="option"
+              aria-selected={isHighlighted(item)}
+              data-value={item}
+              className={`px-4 py-2 text-sm ${isHighlighted(item) ? "bg-foreground text-background font-bold" : "text-muted-foreground"}`}
+            >
+              {item}
+            </div>
+          ))}
         </div>
-      ))}
-    </div>
+      </CardContent>
+    </Card>
   )
 }

@@ -1,35 +1,22 @@
-import { existsSync } from "node:fs"
 import { resolve } from "node:path"
 import {
   buildDocsData,
-  toDocExportName,
+  createHookDocLoader,
   kebabToCamelCase,
-  type HookDoc,
   type HookRegistryItem,
   type RegistryItem,
 } from "@b4r7x/registry-kit"
 
 const ROOT = resolve(import.meta.dirname, "..")
-const HOOK_DOCS_DIR = resolve(ROOT, "registry/hook-docs")
 
 function toHookDirName(name: string): string {
   return name.startsWith("use-") ? name : `use-${name}`
 }
 
-async function loadHookDoc(itemName: string): Promise<HookDoc | null> {
-  const hookDirName = toHookDirName(itemName)
-  const docPath = resolve(HOOK_DOCS_DIR, `${hookDirName}.ts`)
-  if (!existsSync(docPath)) return null
-
-  const mod = await import(docPath) as Record<string, unknown>
-  const exportName = toDocExportName(hookDirName)
-  const doc = mod[exportName]
-  if (!doc) {
-    console.warn(`  Warning: ${docPath} does not export "${exportName}"`)
-    return null
-  }
-  return doc as HookDoc
-}
+const loadHookDoc = createHookDocLoader(
+  resolve(ROOT, "registry/hook-docs"),
+  toHookDirName,
+)
 
 const PROVIDER_HOOKS: HookRegistryItem[] = [
   { name: "use-key", title: "useKey", description: "Bind keyboard shortcuts to handlers with scoped, document-level, or element-targeted listening", files: [{ path: "src/hooks/use-key.ts" }] },

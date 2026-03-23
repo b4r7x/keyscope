@@ -2,29 +2,32 @@
 
 import { useState } from "react"
 import { useScrollLock } from "keyscope"
-
-const btnClass = "px-3 py-1.5 border border-border text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+import { Button } from "@/components/ui/button"
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 
 function Overlay({ onClose }: { onClose: () => void }) {
   useScrollLock()
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 flex items-center justify-center"
+      className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
       onClick={onClose}
     >
-      <div
-        className="bg-background border border-border p-6"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 className="text-sm font-bold mb-2">Overlay</h2>
-        <p className="text-sm text-muted-foreground mb-3">Background scroll is locked while this overlay is visible.</p>
-        <button
-          onClick={onClose}
-          className={btnClass}
-        >
-          Close
-        </button>
+      <div onClick={(e) => e.stopPropagation()}>
+        <Card size="sm" variant="panel">
+          <CardHeader>
+            <CardTitle as="h3">Overlay</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Background scroll is locked while this overlay is visible.
+            </p>
+          </CardContent>
+          <CardFooter>
+            <Button variant="secondary" onClick={onClose}>Close</Button>
+          </CardFooter>
+        </Card>
       </div>
     </div>
   )
@@ -35,13 +38,17 @@ export default function UseScrollLockBasic() {
 
   return (
     <div className="h-[500px]">
-      <button
-        onClick={() => setOpen(true)}
-        className="px-3 py-1.5 border border-border text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
-      >
-        Show Overlay
-      </button>
-      <p className="text-sm text-muted-foreground mt-2">Scroll down to see content. Opening the overlay locks scroll.</p>
+      <div className="flex items-center gap-3 mb-3">
+        <Button variant="secondary" onClick={() => setOpen(true)}>
+          Show Overlay
+        </Button>
+        <Badge variant={open ? "warning" : "neutral"} dot>
+          {open ? "Scroll locked" : "Scroll unlocked"}
+        </Badge>
+      </div>
+      <p className="text-sm text-muted-foreground">
+        Scroll down to see content. Opening the overlay locks scroll.
+      </p>
       {open && <Overlay onClose={() => setOpen(false)} />}
     </div>
   )

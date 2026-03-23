@@ -2,6 +2,17 @@
 
 import { useState } from "react"
 import { KeyboardProvider, useKey, useScope } from "keyscope"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogBody,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog"
+import { Kbd, KbdGroup } from "@/components/ui/kbd"
 
 function App() {
   const [modalOpen, setModalOpen] = useState(false)
@@ -10,7 +21,9 @@ function App() {
 
   return (
     <div>
-      <p className="text-sm text-muted-foreground">Press Ctrl+K to open modal</p>
+      <p className="text-sm text-muted-foreground">
+        Press <KbdGroup><Kbd size="sm">Ctrl</Kbd><Kbd size="sm">K</Kbd></KbdGroup> to open modal
+      </p>
       {modalOpen && <Modal onClose={() => setModalOpen(false)} />}
     </div>
   )
@@ -18,19 +31,26 @@ function App() {
 
 function Modal({ onClose }: { onClose: () => void }) {
   useScope("modal")
-  useKey("Escape", onClose)
 
   return (
-    <div role="dialog" aria-modal="true" className="border border-border p-4 mt-2">
-      <h2 className="text-sm font-bold mb-2">Modal</h2>
-      <p className="text-sm text-muted-foreground mb-3">Esc closes this modal. Ctrl+K is blocked while this scope is active.</p>
-      <button
-        onClick={onClose}
-        className="px-3 py-1.5 border border-border text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
-      >
-        Close
-      </button>
-    </div>
+    <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle decorated={false}>Modal</DialogTitle>
+          <DialogDescription>
+            <Kbd size="sm">Esc</Kbd> closes this modal. <KbdGroup><Kbd size="sm">Ctrl</Kbd><Kbd size="sm">K</Kbd></KbdGroup> is blocked while this scope is active.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogBody>
+          <p className="text-sm text-muted-foreground">
+            The modal scope isolates keyboard shortcuts so parent bindings don't fire.
+          </p>
+        </DialogBody>
+        <DialogFooter>
+          <DialogClose variant="ghost" bracket>Close</DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 
