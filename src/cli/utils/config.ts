@@ -1,11 +1,8 @@
 import {
   z,
   aliasPathSchema,
-  loadJsonConfig,
-  writeJsonConfig,
-  updateManifest as coreUpdateManifest,
+  createConfigModule,
   resolveAliasedPaths,
-  type ConfigLoadResult,
 } from "@b4r7/cli-core";
 import { CONFIG_FILE } from "../constants.js";
 
@@ -55,31 +52,17 @@ export function resolveConfig(raw: KeyscopeConfig, cwd?: string): ResolvedConfig
   };
 }
 
-export function loadConfig(cwd: string): ConfigLoadResult<KeyscopeConfig> {
-  return loadJsonConfig(CONFIG_FILE, KeyscopeConfigSchema, cwd);
-}
+const configModule = createConfigModule<KeyscopeConfig, ResolvedConfig, ManifestInstallMetadata>({
+  configFileName: CONFIG_FILE,
+  schema: KeyscopeConfigSchema,
+  resolveConfig,
+  manifestKey: "installedHooks",
+});
 
-export function loadResolvedConfig(cwd: string): ConfigLoadResult<ResolvedConfig> {
-  const result = loadConfig(cwd);
-  if (!result.ok) return result;
-  return { ok: true, config: resolveConfig(result.config, cwd) };
-}
-
-export function writeConfig(cwd: string, config: KeyscopeConfig): void {
-  writeJsonConfig(CONFIG_FILE, config, cwd);
-}
-
-export function updateManifest(
-  cwd: string,
-  add?: string[],
-  remove?: string[],
-  metadata?: ManifestInstallMetadata,
-): void {
-  coreUpdateManifest(CONFIG_FILE, KeyscopeConfigSchema, "installedHooks", cwd, add, remove, metadata);
-}
-
-export function getManifestHooks(cwd: string): KeyscopeConfig["installedHooks"] {
-  const result = loadConfig(cwd);
-  if (!result.ok) return undefined;
-  return result.config.installedHooks;
-}
+export const {
+  loadConfig,
+  loadResolvedConfig,
+  writeConfig,
+  updateManifest,
+  getManifestItems: getManifestHooks,
+} = configModule;

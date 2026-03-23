@@ -1,20 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseMode, applyModeDeps } from "./add-helpers.js";
-
-describe("parseMode", () => {
-  it('defaults to "copy" for undefined', () => {
-    expect(parseMode(undefined)).toBe("copy");
-  });
-
-  it("accepts valid mode values", () => {
-    expect(parseMode("copy")).toBe("copy");
-    expect(parseMode("package")).toBe("package");
-  });
-
-  it("throws for invalid values", () => {
-    expect(() => parseMode("invalid")).toThrow();
-  });
-});
+import { applyModeDeps } from "./add-helpers.js";
 
 describe("applyModeDeps", () => {
   it("removes keyscope in copy mode", () => {

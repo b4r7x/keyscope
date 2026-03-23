@@ -1,9 +1,6 @@
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
-  z,
-  RegistryContentFileSchema,
-  RegistryContentItemSchema,
   BaseRegistryBundleSchema,
   createRegistryLoader,
   createRegistryAccessors,
@@ -11,10 +8,6 @@ import {
 import { ITEM_LABEL } from "../constants.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-
-export type RegistryFile = z.infer<typeof RegistryContentFileSchema>;
-export type RegistryItem = z.infer<typeof RegistryContentItemSchema>;
-export type RegistryBundle = z.infer<typeof BaseRegistryBundleSchema>;
 
 const getRegistry = createRegistryLoader(
   resolve(__dirname, "../generated/registry-bundle.json"),
