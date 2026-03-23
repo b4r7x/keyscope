@@ -52,10 +52,9 @@ src/
 │   ├── keyboard-utils.ts        # matchesHotkey(), isInputElement()
 │   └── keyboard-utils.test.ts
 ├── cli/
-│   ├── index.ts                 # CLI entry point (createCli)
-│   ├── constants.ts             # VERSION, CONFIG_FILE
-│   ├── commands/                # init, add, list, diff, remove
-│   ├── utils/                   # config, registry, commands
+│   ├── index.ts                 # CLI entry point (createCli + runCli)
+│   ├── context.ts               # config schema, registry loader, item accessors
+│   ├── commands/                # init, add, list, diff, remove (all use cli-core factories)
 │   └── generated/               # registry-bundle.json (built)
 registry/
 │   └── registry.json            # 3 standalone hooks

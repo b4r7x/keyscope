@@ -78,6 +78,7 @@
     "keyscope": "./dist/cli/index.js"
   },
   "dependencies": {
-    "@b4r7/cli-core": "workspace:*"
+    "@b4r7/cli-core": "workspace:*",
+    "zod": "^4.3.6"
   }
 }

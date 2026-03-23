@@ -1,29 +1,23 @@
 import { resolve } from "node:path";
-import { getPublicHooks, getRelativePath } from "../utils/registry.js";
-import {
-  createHookInstallChecker,
-  getHookOrThrow,
-  requireConfig,
-  validateHooks,
-} from "../utils/commands.js";
 import { createDiffCommand, ensureWithinDir } from "@b4r7/cli-core";
+import { ctx } from "../context.js";
 
 export const diffCommand = createDiffCommand({
   itemPlural: "hooks",
-  requireConfig,
+  requireConfig: ctx.items.requireConfig,
   resolveDefaultNames: ({ cwd, config }) => {
-    const isInstalled = createHookInstallChecker(cwd, config.hooksFsPath);
-    return getPublicHooks()
+    const isInstalled = ctx.createChecker(cwd, config.hooksFsPath);
+    return ctx.registry.getPublicItems()
       .filter((hook) => isInstalled(hook.name))
       .map((hook) => hook.name);
   },
-  validateRequestedNames: validateHooks,
+  validateRequestedNames: ctx.items.validate,
   resolveFilesForName: ({ name, cwd, config }) => {
     const hooksDir = resolve(cwd, config.hooksFsPath);
-    const item = getHookOrThrow(name);
+    const item = ctx.items.getOrThrow(name);
 
     return item.files.map((file) => {
-      const relativePath = getRelativePath(file);
+      const relativePath = ctx.registry.relativePath(file);
       const localPath = resolve(cwd, config.hooksFsPath, relativePath);
       ensureWithinDir(localPath, hooksDir);
 
