@@ -1,22 +1,13 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, renderHook, cleanup, act } from "@testing-library/react";
 import { useEffect, type ReactNode } from "react";
-import { KeyboardProvider } from "../../providers/keyboard-provider";
-import { useKeyboardContext } from "../../context/keyboard-context";
-import { useScope } from "../use-scope";
+import { KeyboardProvider } from "../providers/keyboard-provider";
+import { useKeyboardContext } from "../context/keyboard-context";
+import { useScope } from "./use-scope";
+import { fireKey as pressKey } from "../testing/test-utils";
 
 function Wrapper({ children }: { children: ReactNode }) {
   return <KeyboardProvider>{children}</KeyboardProvider>;
-}
-
-function pressKey(key: string) {
-  const event = new KeyboardEvent("keydown", {
-    key,
-    bubbles: true,
-    cancelable: true,
-  });
-  window.dispatchEvent(event);
-  return event;
 }
 
 describe("useScope", () => {

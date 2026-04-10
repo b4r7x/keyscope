@@ -1,21 +1,12 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, cleanup, screen, act } from "@testing-library/react";
 import { useRef, type ReactNode } from "react";
-import { KeyboardProvider } from "../../providers/keyboard-provider";
-import { useScopedNavigation, type UseScopedNavigationOptions } from "../use-scoped-navigation";
+import { KeyboardProvider } from "../providers/keyboard-provider";
+import { useScopedNavigation, type UseScopedNavigationOptions } from "./use-scoped-navigation";
+import { fireKey } from "../testing/test-utils";
 
 function wrapper({ children }: { children: ReactNode }) {
   return <KeyboardProvider>{children}</KeyboardProvider>;
-}
-
-function fireKey(key: string) {
-  const event = new KeyboardEvent("keydown", {
-    key,
-    bubbles: true,
-    cancelable: true,
-  });
-  window.dispatchEvent(event);
-  return event;
 }
 
 function TestList({

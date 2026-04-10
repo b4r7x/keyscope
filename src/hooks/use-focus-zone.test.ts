@@ -1,23 +1,13 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { renderHook, act, cleanup } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
-import { KeyboardProvider } from "../../providers/keyboard-provider";
-import { useFocusZone } from "../use-focus-zone";
-import { useKey } from "../use-key";
+import { KeyboardProvider } from "../providers/keyboard-provider";
+import { useFocusZone } from "./use-focus-zone";
+import { useKey } from "./use-key";
+import { fireKey } from "../testing/test-utils";
 
 function wrapper({ children }: { children: ReactNode }) {
   return createElement(KeyboardProvider, null, children);
-}
-
-function fireKey(key: string, options?: Partial<KeyboardEvent>) {
-  const event = new KeyboardEvent("keydown", {
-    key,
-    bubbles: true,
-    cancelable: true,
-    ...options,
-  });
-  window.dispatchEvent(event);
-  return event;
 }
 
 describe("useFocusZone", () => {

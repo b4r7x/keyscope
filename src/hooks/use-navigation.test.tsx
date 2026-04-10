@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, cleanup, screen, act } from "@testing-library/react";
 import { useRef, type KeyboardEventHandler } from "react";
-import { useNavigation, type UseNavigationOptions } from "../use-navigation";
+import { useNavigation, type UseNavigationOptions } from "./use-navigation";
 
 function onKeyDownProp(fn: (e: globalThis.KeyboardEvent) => void): KeyboardEventHandler {
   return fn as unknown as KeyboardEventHandler;

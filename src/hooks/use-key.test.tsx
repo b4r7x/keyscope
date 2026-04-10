@@ -1,22 +1,12 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { renderHook, cleanup } from "@testing-library/react";
+import { renderHook, cleanup, fireEvent } from "@testing-library/react";
 import { type ReactNode } from "react";
-import { KeyboardProvider } from "../../providers/keyboard-provider";
-import { useKey } from "../use-key";
+import { KeyboardProvider } from "../providers/keyboard-provider";
+import { useKey } from "./use-key";
+import { fireKey } from "../testing/test-utils";
 
 function wrapper({ children }: { children: ReactNode }) {
   return <KeyboardProvider>{children}</KeyboardProvider>;
-}
-
-function fireKey(key: string, options?: Partial<KeyboardEvent>) {
-  const event = new KeyboardEvent("keydown", {
-    key,
-    bubbles: true,
-    cancelable: true,
-    ...options,
-  });
-  window.dispatchEvent(event);
-  return event;
 }
 
 describe("useKey", () => {
@@ -133,6 +123,16 @@ describe("useKey", () => {
       fireKey("Escape");
       expect(secondHandler).toHaveBeenCalled();
       expect(callCount).toBe(2);
+    });
+  });
+
+  describe("without KeyboardProvider", () => {
+    it("does not throw when used without KeyboardProvider", () => {
+      const handler = vi.fn();
+      const { unmount } = renderHook(() => useKey("a", handler));
+      fireEvent.keyDown(document, { key: "a" });
+      expect(handler).not.toHaveBeenCalled();
+      unmount();
     });
   });
 

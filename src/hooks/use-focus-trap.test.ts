@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import { renderHook, cleanup, act } from "@testing-library/react";
 import { useRef, type RefObject } from "react";
-import { useFocusTrap } from "../use-focus-trap";
+import { useFocusTrap } from "./use-focus-trap";
 
 function createContainer(...focusableHTML: string[]) {
   const container = document.createElement("div");
@@ -46,30 +46,25 @@ describe("useFocusTrap", () => {
   }
 
   describe("initial focus", () => {
-    it("focuses first focusable element, falls back to container, and respects initialFocus", () => {
-      // Default: focuses first focusable element
+    it("focuses first focusable element", () => {
       container = createContainer(
         '<button id="a">A</button>',
         '<button id="b">B</button>',
       );
       renderTrap(container);
       expect(document.activeElement).toBe(container.querySelector("#a"));
+    });
 
-      cleanup();
-      container.remove();
-
-      // No focusable elements: focuses container and Tab does not preventDefault
+    it("falls back to container when no focusable children", () => {
       container = createContainer("<p>No focusable</p>");
       renderTrap(container);
       expect(document.activeElement).toBe(container);
 
       const event = fireTab();
       expect(event.defaultPrevented).toBe(false);
+    });
 
-      cleanup();
-      container.remove();
-
-      // initialFocus: focuses the specified element
+    it("respects initialFocus ref", () => {
       container = createContainer(
         '<button id="a">A</button>',
         '<button id="b">B</button>',
@@ -127,7 +122,7 @@ describe("useFocusTrap", () => {
   });
 
   describe("focus restoration", () => {
-    it("restores focus on unmount only when restoreFocus is true", () => {
+    it("restores focus on unmount when restoreFocus is true", () => {
       const outsideButton = document.createElement("button");
       outsideButton.id = "outside";
       document.body.appendChild(outsideButton);
@@ -142,15 +137,22 @@ describe("useFocusTrap", () => {
       unmount();
       expect(document.activeElement).toBe(outsideButton);
 
-      // restoreFocus: false — does not restore
+      outsideButton.remove();
+    });
+
+    it("does not restore focus when restoreFocus is false", () => {
+      const outsideButton = document.createElement("button");
+      outsideButton.id = "outside";
+      document.body.appendChild(outsideButton);
       outsideButton.focus();
-      container.remove();
+      expect(document.activeElement).toBe(outsideButton);
+
       container = createContainer('<button id="a">A</button>');
-      const { unmount: unmount2 } = renderTrap(container, { restoreFocus: false });
+      const { unmount } = renderTrap(container, { restoreFocus: false });
 
       expect(document.activeElement).toBe(container.querySelector("#a"));
 
-      unmount2();
+      unmount();
       expect(document.activeElement).not.toBe(outsideButton);
 
       outsideButton.remove();

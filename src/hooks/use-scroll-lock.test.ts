@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { renderHook, cleanup } from "@testing-library/react";
 import { useRef } from "react";
-import { useScrollLock } from "../use-scroll-lock";
+import { useScrollLock } from "./use-scroll-lock";
 
 describe("useScrollLock", () => {
   afterEach(() => {
@@ -23,7 +23,7 @@ describe("useScrollLock", () => {
     document.body.style.overflow = "scroll";
 
     const { rerender, unmount } = renderHook(
-      ({ enabled }) => useScrollLock(undefined, enabled),
+      ({ enabled }) => useScrollLock({ enabled }),
       { initialProps: { enabled: false } },
     );
     expect(document.body.style.overflow).toBe("scroll");
@@ -44,7 +44,7 @@ describe("useScrollLock", () => {
 
     const { unmount } = renderHook(() => {
       const ref = useRef<HTMLElement>(container);
-      useScrollLock(ref);
+      useScrollLock({ target: ref });
     });
 
     expect(container.style.overflow).toBe("hidden");
