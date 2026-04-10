@@ -1,8 +1,7 @@
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 import { copyArtifactsToPackage } from "@b4r7x/registry-kit";
 
-const PKG_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const PKG_DIR = resolve(import.meta.dirname, "..");
 const KEYSCOPE_ROOT = resolve(PKG_DIR, "..");
 
 copyArtifactsToPackage({

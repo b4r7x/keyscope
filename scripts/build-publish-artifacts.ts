@@ -1,14 +1,12 @@
 import { existsSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 import {
   buildRegistryArtifacts,
   createArtifactManifest,
+  REGISTRY_ORIGIN,
 } from "@b4r7x/registry-kit";
 
-const REGISTRY_ORIGIN = "https://diffgazer.com";
-
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const ROOT = resolve(import.meta.dirname, "..");
 
 const INPUTS = [
   "docs/content",

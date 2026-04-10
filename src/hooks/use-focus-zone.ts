@@ -6,7 +6,7 @@ import { keys } from "../utils/keys.js";
 
 type ZoneTransition<T extends string> = (params: {
   zone: T;
-  key: "ArrowLeft" | "ArrowRight" | "ArrowUp" | "ArrowDown" | "Tab";
+  key: "ArrowLeft" | "ArrowRight" | "ArrowUp" | "ArrowDown";
 }) => T | null;
 
 interface UseFocusZoneOptions<T extends string> {
@@ -59,7 +59,7 @@ export function useFocusZone<T extends string>(
   });
 
   const stableTransitions = useEffectEvent(
-    (key: "ArrowLeft" | "ArrowRight" | "ArrowUp" | "ArrowDown" | "Tab") => {
+    (key: "ArrowLeft" | "ArrowRight" | "ArrowUp" | "ArrowDown") => {
       const next = options.transitions?.({ zone: currentZone, key });
       if (next != null && zones.includes(next)) {
         setZoneValue(next);
@@ -91,7 +91,7 @@ export function useFocusZone<T extends string>(
     preventDefault: true,
   });
 
-  useScope(options.scope ?? "__noop__", { enabled: enabled && !!options.scope });
+  useScope(options.scope ?? null, { enabled: enabled && !!options.scope });
 
   const safeZone = zones.includes(currentZone) ? currentZone : zones[0];
 

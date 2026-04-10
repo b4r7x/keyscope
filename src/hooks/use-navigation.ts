@@ -2,9 +2,11 @@
 
 import {
   useState,
+  useEffectEvent,
   type RefObject,
   type KeyboardEvent,
 } from "react";
+import { resolveDirectionKeys, dispatchNavigationKey } from "../internal/navigation-dispatch.js";
 
 export type NavigationRole = "radio" | "checkbox" | "option" | "menuitem" | "button" | "tab";
 
@@ -35,7 +37,7 @@ export interface UseNavigationReturn {
   onKeyDown: (event: KeyboardEvent) => void;
 }
 
-export interface UseNavigationCoreReturn {
+interface UseNavigationCoreReturn {
   highlighted: string | null;
   isHighlighted: (value: string) => boolean;
   highlight: (value: string) => void;
@@ -102,7 +104,7 @@ export function useNavigationCore({
     return index >= 0 ? index : 0;
   };
 
-  const focusIndex = (index: number) => {
+  const focusIndex = useEffectEvent((index: number) => {
     const elements = getElements();
     const el = elements[index];
     if (el?.dataset.value) {
@@ -110,9 +112,9 @@ export function useNavigationCore({
       if (moveFocus) el.focus();
       setFocusedValue(el.dataset.value);
     }
-  };
+  });
 
-  const move = (delta: 1 | -1) => {
+  const move = useEffectEvent((delta: 1 | -1) => {
     const elements = getElements();
     if (elements.length === 0) return;
 
@@ -125,18 +127,18 @@ export function useNavigationCore({
     }
 
     focusIndex(next);
-  };
+  });
 
-  const handleSelect = (event: globalThis.KeyboardEvent) => {
+  const handleSelect = useEffectEvent((event: globalThis.KeyboardEvent) => {
     if (highlighted) onSelect?.(highlighted, event);
-  };
+  });
 
-  const handleEnter = (event: globalThis.KeyboardEvent) => {
+  const handleEnter = useEffectEvent((event: globalThis.KeyboardEvent) => {
     if (highlighted) {
       if (onEnter) onEnter(highlighted, event);
       else onSelect?.(highlighted, event);
     }
-  };
+  });
 
   const isHighlighted = (v: string) => highlighted === v;
   const highlight = (v: string) => setFocusedValue(v);
@@ -153,13 +155,12 @@ export function useNavigation(options: UseNavigationOptions): UseNavigationRetur
     downKeys,
   } = options;
 
-  const resolvedUpKeys = upKeys ?? (orientation === "vertical" ? ["ArrowUp"] : ["ArrowLeft"]);
-  const resolvedDownKeys = downKeys ?? (orientation === "vertical" ? ["ArrowDown"] : ["ArrowRight"]);
+  const { resolvedUpKeys, resolvedDownKeys } = resolveDirectionKeys(orientation, upKeys, downKeys);
 
   const { highlighted, isHighlighted, highlight, move, focusIndex, handleSelect, handleEnter, getElements } =
     useNavigationCore(options);
 
-  const onKeyDown = (event: KeyboardEvent) => {
+  const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
     if (!enabled) return;
 
     const key = event.key;
@@ -169,22 +170,17 @@ export function useNavigation(options: UseNavigationOptions): UseNavigationRetur
 
     if (preventDefault) event.preventDefault();
 
-    const nativeEvent = event.nativeEvent;
-
-    if (resolvedUpKeys.includes(key)) { move(-1); return; }
-    if (resolvedDownKeys.includes(key)) { move(1); return; }
-
-    switch (key) {
-      case "Home": focusIndex(0); return;
-      case "End": {
-        const elements = getElements();
-        if (elements.length > 0) focusIndex(elements.length - 1);
-        return;
-      }
-      case "Enter": handleEnter(nativeEvent); return;
-      case " ": handleSelect(nativeEvent); return;
-    }
-  };
+    dispatchNavigationKey(key, {
+      resolvedUpKeys,
+      resolvedDownKeys,
+      move,
+      focusIndex,
+      handleSelect: options.moveFocus ? undefined : (e) => handleSelect(e),
+      handleEnter: options.moveFocus ? undefined : (e) => handleEnter(e),
+      total: getElements().length,
+      nativeEvent: event.nativeEvent,
+    });
+  });
 
   return { highlighted, isHighlighted, highlight, onKeyDown };
 }

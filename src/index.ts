@@ -15,9 +15,10 @@ export type { ZoneProps } from "./hooks/use-focus-zone.js";
 export { useFocusTrap } from "./hooks/use-focus-trap.js";
 export type { UseFocusTrapOptions } from "./hooks/use-focus-trap.js";
 export { useScrollLock } from "./hooks/use-scroll-lock.js";
+export type { UseScrollLockOptions } from "./hooks/use-scroll-lock.js";
 
 export { keys } from "./utils/keys.js";
 
-export { useOptionalKeyboardContext } from "./context/keyboard-context.js";
+export { useKeyboardContext, useOptionalKeyboardContext } from "./context/keyboard-context.js";
 
 export type { NavigationRole } from "./hooks/use-navigation.js";

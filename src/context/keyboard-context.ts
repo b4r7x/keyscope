@@ -1,8 +1,5 @@
-import type { ContextType } from "react";
 import { useContext } from "react";
-import { KeyboardContext } from "../providers/keyboard-provider.js";
-
-type KeyboardContextValue = NonNullable<ContextType<typeof KeyboardContext>>;
+import { KeyboardContext, type KeyboardContextValue } from "../providers/keyboard-provider.js";
 
 export function useKeyboardContext(): KeyboardContextValue {
   const ctx = useContext(KeyboardContext);

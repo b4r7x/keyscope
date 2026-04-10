@@ -1,35 +1,60 @@
 "use client"
 
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { Card, CardContent } from "@/components/ui/card"
-import { Kbd } from "@/components/ui/kbd"
+import { useRef, useState } from "react"
+import { useNavigation } from "keyscope"
 
-const tabs = ["General", "Security", "Notifications", "Billing"]
+const tabs = [
+  { id: "general", label: "General", content: "Manage your account settings and preferences." },
+  { id: "security", label: "Security", content: "Configure passwords, 2FA, and login sessions." },
+  { id: "notifications", label: "Notifications", content: "Choose which alerts and emails you receive." },
+  { id: "billing", label: "Billing", content: "View invoices and update payment methods." },
+]
 
 export default function UseNavigationTabs() {
+  const tabListRef = useRef<HTMLDivElement>(null)
+  const [activeTab, setActiveTab] = useState(tabs[0]!.id)
+
+  const { isHighlighted, onKeyDown } = useNavigation({
+    containerRef: tabListRef,
+    role: "tab",
+    orientation: "horizontal",
+    wrap: true,
+    value: activeTab,
+    onValueChange: setActiveTab,
+  })
+
+  const activeContent = tabs.find((t) => t.id === activeTab)
+
   return (
-    <Card size="md">
-      <CardContent>
-        <Tabs defaultValue="General">
-          <TabsList>
-            {tabs.map((tab) => (
-              <TabsTrigger key={tab} value={tab}>
-                {tab}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          {tabs.map((tab) => (
-            <TabsContent key={tab} value={tab}>
-              <p className="text-sm text-muted-foreground py-2">
-                Content for {tab}
-              </p>
-            </TabsContent>
-          ))}
-        </Tabs>
-        <p className="text-xs text-muted-foreground mt-3">
-          <Kbd size="sm">←</Kbd> <Kbd size="sm">→</Kbd> navigate tabs
-        </p>
-      </CardContent>
-    </Card>
+    <div>
+      <div
+        ref={tabListRef}
+        role="tablist"
+        aria-label="Settings"
+        onKeyDown={onKeyDown}
+        tabIndex={0}
+        className="flex border-b border-border focus:outline-none"
+      >
+        {tabs.map((tab) => (
+          <div
+            key={tab.id}
+            role="tab"
+            data-value={tab.id}
+            aria-selected={isHighlighted(tab.id)}
+            className={`px-4 py-2 text-sm cursor-pointer ${
+              isHighlighted(tab.id)
+                ? "border-b-2 border-foreground text-foreground font-bold"
+                : "text-muted-foreground"
+            }`}
+            onClick={() => setActiveTab(tab.id)}
+          >
+            {tab.label}
+          </div>
+        ))}
+      </div>
+      <div role="tabpanel" className="p-4 text-sm text-muted-foreground">
+        {activeContent?.content}
+      </div>
+    </div>
   )
 }

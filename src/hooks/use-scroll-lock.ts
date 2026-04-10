@@ -5,10 +5,14 @@ import { useEffect, type RefObject } from "react";
 const lockCounts = new WeakMap<Element, number>();
 const savedOverflow = new WeakMap<Element, string>();
 
-export function useScrollLock(
-  target?: RefObject<HTMLElement | null>,
-  enabled = true,
-): void {
+export interface UseScrollLockOptions {
+  target?: RefObject<HTMLElement | null>;
+  enabled?: boolean;
+}
+
+export function useScrollLock(options: UseScrollLockOptions = {}): void {
+  const { target, enabled = true } = options;
+
   useEffect(() => {
     if (!enabled) return;
 

@@ -1,4 +1,3 @@
-import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
@@ -10,15 +9,11 @@ import {
   createItemAccessors,
   createRegistryAccessors,
   createRegistryLoader,
+  readPackageVersion,
   resolveAliasedPaths,
 } from "@b4r7/cli-core";
 
-// --- Version ---
-
-const req = createRequire(import.meta.url);
-export const VERSION: string = (req("../../package.json") as { version: string }).version;
-
-// --- Config Schema ---
+export const VERSION = readPackageVersion(import.meta.url, "../../package.json");
 
 export const KeyscopeConfigSchema = z.object({
   $schema: z.string().optional(),
@@ -41,6 +36,7 @@ export type ManifestInstallMetadata = {
   keyscopeVersion?: string;
 };
 
+/** Keyscope CLI resolved config (hook paths). */
 export interface ResolvedConfig {
   aliases: { hooks: string };
   hooksFsPath: string;
@@ -58,8 +54,6 @@ export function resolveConfig(raw: KeyscopeConfig, cwd?: string): ResolvedConfig
   return { aliases, hooksFsPath: resolved.hooks };
 }
 
-// --- Add Helpers ---
-
 export type AddMode = "copy" | "package";
 
 export function applyModeDeps(deps: string[], mode: AddMode, keyscopeVersionSpec: string): string[] {
@@ -70,8 +64,6 @@ export function applyModeDeps(deps: string[], mode: AddMode, keyscopeVersionSpec
   }
   return [...depSet];
 }
-
-// --- Context ---
 
 const CONFIG_FILE = "keyscope.json";
 const __dirname = dirname(fileURLToPath(import.meta.url));

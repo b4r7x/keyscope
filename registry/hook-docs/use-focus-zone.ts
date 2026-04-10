@@ -52,7 +52,7 @@ export const useFocusZoneDoc: HookDoc = {
     },
     {
       name: "transitions",
-      type: '(params: { zone: T; key: "ArrowLeft" | "ArrowRight" | "ArrowUp" | "ArrowDown" | "Tab" }) => T | null',
+      type: '(params: { zone: T; key: "ArrowLeft" | "ArrowRight" | "ArrowUp" | "ArrowDown" }) => T | null',
       required: false,
       description:
         "Custom transition function. Return the target zone for a key press, or null to block the transition.",

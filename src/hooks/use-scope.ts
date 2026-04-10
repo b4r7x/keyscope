@@ -5,12 +5,14 @@ interface UseScopeOptions {
   enabled?: boolean;
 }
 
-export function useScope(name: string, options: UseScopeOptions = {}): void {
+export function useScope(name: string | null, options: UseScopeOptions = {}): void {
   const { enabled = true } = options;
   const { pushScope } = useKeyboardContext();
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || name === null) return;
     return pushScope(name);
-  }, [name, pushScope, enabled]);
+    // pushScope is useEffectEvent-based (stable reference), excluded from deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [name, enabled]);
 }

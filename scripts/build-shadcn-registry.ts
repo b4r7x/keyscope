@@ -1,8 +1,6 @@
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
-import { buildShadcnRegistryWithOrigin } from "@b4r7x/registry-kit";
+import { resolve } from "node:path";
+import { buildShadcnRegistryWithOrigin, REGISTRY_ORIGIN } from "@b4r7x/registry-kit";
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const REGISTRY_ORIGIN = "https://diffgazer.com";
+const ROOT = resolve(import.meta.dirname, "..");
 
 buildShadcnRegistryWithOrigin({ rootDir: ROOT, defaultOrigin: REGISTRY_ORIGIN });

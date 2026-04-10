@@ -1,4 +1,4 @@
-import { createContext, useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { createContext, useEffect, useEffectEvent, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { isInputElement, matchesHotkey } from "../utils/keyboard-utils.js";
 
 type Handler = (event: KeyboardEvent) => void;
@@ -18,7 +18,7 @@ interface HandlerEntry {
 
 type HandlerMap = Map<string, HandlerEntry[]>;
 
-interface KeyboardContextValue {
+export interface KeyboardContextValue {
   activeScope: string | null;
   pushScope: (scope: string) => () => void;
   register: (scope: string, hotkey: string, handler: Handler, options?: HandlerOptions) => () => void;
@@ -34,6 +34,8 @@ function isWithinTarget(eventTarget: EventTarget | null, options?: HandlerOption
 }
 
 export function KeyboardProvider({ children }: { children: ReactNode }) {
+  // scopeStack is intentionally stored in state (not a ref) so that changes
+  // trigger re-renders, allowing context consumers to react to scope transitions.
   const [scopeStack, setScopeStack] = useState<Array<{ name: string; id: number }>>([{ name: "global", id: 0 }]);
   const handlers = useRef(new Map<string, HandlerMap>());
   const nextHandlerId = useRef(1);
@@ -41,7 +43,7 @@ export function KeyboardProvider({ children }: { children: ReactNode }) {
 
   const activeScope = scopeStack[scopeStack.length - 1]?.name ?? null;
 
-  const pushScope = useCallback((scope: string) => {
+  const pushScope = useEffectEvent((scope: string) => {
     const id = nextScopeId.current++;
     setScopeStack((prev) => [...prev, { name: scope, id }]);
     return () => {
@@ -53,7 +55,7 @@ export function KeyboardProvider({ children }: { children: ReactNode }) {
         return next;
       });
     };
-  }, []);
+  });
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -92,7 +94,7 @@ export function KeyboardProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [activeScope]);
 
-  const register = useCallback((scope: string, hotkey: string, handler: Handler, options?: HandlerOptions) => {
+  const register = useEffectEvent((scope: string, hotkey: string, handler: Handler, options?: HandlerOptions) => {
     let scopeHandlers = handlers.current.get(scope);
     if (!scopeHandlers) {
       scopeHandlers = new Map<string, HandlerEntry[]>();
@@ -122,7 +124,14 @@ export function KeyboardProvider({ children }: { children: ReactNode }) {
         activeScopeHandlers.set(hotkey, remainingEntries);
       }
     };
-  }, []);
+  });
 
-  return <KeyboardContext.Provider value={{ activeScope, pushScope, register }}>{children}</KeyboardContext.Provider>;
+  const contextValue = useMemo<KeyboardContextValue>(
+    () => ({ activeScope, pushScope, register }),
+    // pushScope and register are useEffectEvent — stable by contract, excluded from deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeScope],
+  );
+
+  return <KeyboardContext.Provider value={contextValue}>{children}</KeyboardContext.Provider>;
 }

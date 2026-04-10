@@ -64,5 +64,7 @@ export function useFocusTrap(
         previousFocus?.focus();
       }
     };
+  // Note: containerRef and initialFocus are RefObjects (stable identity).
+  // If a new ref object is passed, the effect will not re-run.
   }, [enabled, restoreFocus]);
 }

@@ -5,6 +5,7 @@ import {
 } from "./use-navigation.js";
 import { useKey } from "./use-key.js";
 import { keys } from "../utils/keys.js";
+import { resolveDirectionKeys, dispatchNavigationKey } from "../internal/navigation-dispatch.js";
 
 export interface UseScopedNavigationOptions extends UseNavigationOptions {
   requireFocusWithin?: boolean;
@@ -27,25 +28,22 @@ export function useScopedNavigation(options: UseScopedNavigationOptions): UseSco
     containerRef,
   } = options;
 
-  const resolvedUpKeys = upKeys ?? (orientation === "vertical" ? ["ArrowUp"] : ["ArrowLeft"]);
-  const resolvedDownKeys = downKeys ?? (orientation === "vertical" ? ["ArrowDown"] : ["ArrowRight"]);
+  const { resolvedUpKeys, resolvedDownKeys } = resolveDirectionKeys(orientation, upKeys, downKeys);
 
   const { highlighted, isHighlighted, highlight, move, focusIndex, handleSelect, handleEnter, getElements } =
     useNavigationCore(options);
 
   const dispatch = useEffectEvent((key: string, nativeEvent: globalThis.KeyboardEvent) => {
-    if (resolvedUpKeys.includes(key)) { move(-1); return; }
-    if (resolvedDownKeys.includes(key)) { move(1); return; }
-    switch (key) {
-      case "Home": focusIndex(0); break;
-      case "End": {
-        const elements = getElements();
-        if (elements.length > 0) focusIndex(elements.length - 1);
-        break;
-      }
-      case "Enter": handleEnter(nativeEvent); break;
-      case " ": handleSelect(nativeEvent); break;
-    }
+    dispatchNavigationKey(key, {
+      resolvedUpKeys,
+      resolvedDownKeys,
+      move,
+      focusIndex,
+      handleSelect: (e) => handleSelect(e),
+      handleEnter: (e) => handleEnter(e),
+      total: getElements().length,
+      nativeEvent,
+    });
   });
 
   useKey(

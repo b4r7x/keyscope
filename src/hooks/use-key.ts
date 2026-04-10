@@ -2,6 +2,7 @@ import { useEffect, useEffectEvent } from "react";
 import type { RefObject } from "react";
 import type { HandlerOptions } from "../providers/keyboard-provider.js";
 import { useOptionalKeyboardContext } from "../context/keyboard-context.js";
+import type { KeyHandler } from "../internal/normalize-key-input.js";
 import { normalizeKeyInput } from "../internal/normalize-key-input.js";
 
 export interface UseKeyOptions {
@@ -11,8 +12,6 @@ export interface UseKeyOptions {
   requireFocusWithin?: boolean;
   preventDefault?: boolean;
 }
-
-type KeyHandler = (event: KeyboardEvent) => void;
 
 export function useKey(
   hotkey: string,
@@ -78,8 +77,9 @@ export function useKey(
     );
 
     return () => cleanups.forEach((cleanup) => cleanup());
+    // register is useEffectEvent-based (stable reference), excluded from deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    register,
     activeScope,
     keysKey,
     enabled,

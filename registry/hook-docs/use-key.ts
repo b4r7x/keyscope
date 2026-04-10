@@ -57,7 +57,7 @@ export const useKeyDoc: HookDoc = {
       type: "boolean",
       required: false,
       description: "Call preventDefault() on the keyboard event when the hotkey matches.",
-      defaultValue: "true",
+      defaultValue: "false",
     },
   ],
   returns: {

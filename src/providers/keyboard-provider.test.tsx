@@ -3,15 +3,10 @@ import { render, screen, act, cleanup } from "@testing-library/react";
 import { useEffect, useRef, type ReactNode } from "react";
 import { KeyboardProvider } from "./keyboard-provider";
 import { useKeyboardContext } from "../context/keyboard-context";
+import { fireKey as pressKey } from "../testing/test-utils";
 
 function Wrapper({ children }: { children: ReactNode }) {
   return <KeyboardProvider>{children}</KeyboardProvider>;
-}
-
-function pressKey(key: string, modifiers: Partial<KeyboardEventInit> = {}) {
-  window.dispatchEvent(
-    new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true, ...modifiers }),
-  );
 }
 
 describe("KeyboardProvider", () => {

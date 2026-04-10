@@ -7,7 +7,7 @@ export function FocusTrapDemo() {
   const modalRef = useRef<HTMLDivElement>(null);
 
   useFocusTrap(modalRef, { enabled: modalOpen });
-  useScrollLock(undefined, modalOpen);
+  useScrollLock({ enabled: modalOpen });
 
   useKey("Escape", () => setModalOpen(false), { enabled: modalOpen });
 
